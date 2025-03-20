@@ -1,16 +1,12 @@
 from ninja import Router, UploadedFile, File
 from .models import Imagen
-from main.schemas import ImageSchema
+from .schemas import ImageSchema
 from django.http import HttpRequest
 from PIL import Image, ExifTags
 from io import BytesIO
 import ast
 from datetime import datetime
 router = Router()
-
-@router.get('/')
-def hola(request):
-    return 'hola'
 
 
 @router.post('/img',)

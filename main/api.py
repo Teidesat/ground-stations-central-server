@@ -1,20 +1,10 @@
 from ninja import NinjaAPI
-from .schemas import HelloSchema, UserSchema, UserError
+from .schemas import UserSchema, UserError
 from django.contrib.auth.models import User
 
 api = NinjaAPI()
 
-api.add_router('/prueba', "analyze_image.api.router")
-
-
-
-@api.get('/')
-def home(request):
-    return "estoy en el home"
-
-@api.post("/hello", url_name="hello")
-def hello(request, data: HelloSchema):
-    return f'Hello {data.name}'
+api.add_router('/analyze-image', "apps.analyze_image.api.router")
 
 
 @api.get('/me', response={200: UserSchema, 403: UserError})

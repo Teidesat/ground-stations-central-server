@@ -1,8 +1,6 @@
 from ninja import Schema
 from datetime import datetime
 
-class HelloSchema(Schema):
-    name: str 
     
 class UserSchema(Schema):
     username: str
@@ -12,11 +10,4 @@ class UserSchema(Schema):
 
 class UserError(Schema):
     message:str
-    
-    
-class ImageSchema(Schema):
-    id:int
-    header:dict
-    exif:dict
-
     
