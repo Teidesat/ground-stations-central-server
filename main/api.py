@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from ninja import NinjaAPI
 
-from .schemas import UserError, UserSchema
+from .schemas import UserError, UserSchema, MsgSchema
 
 api = NinjaAPI()
 
@@ -28,3 +28,7 @@ def create_user(request, data: UserSchema):
         return user
     except:
         return 404, {'message': 'Te equivocaste en los campos'}
+
+@api.post('/')
+def recibir_datos(request, data:MsgSchema):
+    return data

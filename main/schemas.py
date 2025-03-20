@@ -10,3 +10,6 @@ class UserSchema(Schema):
 
 class UserError(Schema):
     message: str
+
+class MsgSchema(Schema):
+    content: str

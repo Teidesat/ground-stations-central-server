@@ -10,7 +10,7 @@ from PIL import ExifTags, Image
 
 from .models import Imagen
 from .schemas import ImageSchema
-
+from .task import obtener_datos_buffer
 router = Router()
 
 
@@ -62,12 +62,5 @@ def listar_img(request):
 
 @router.get('/prueba-bufer')
 def get_image(request):
-    API_URL = 'http://127.0.0.1:8000/api/buffer/get'
-
-    async def obtener_datos():
-        async with httpx.AsyncClient() as client:
-            response = await client.get(API_URL)
-            return response.json()
-
-    data = asyncio.run(obtener_datos())
+    data = asyncio.run(obtener_datos_buffer())
     return data
