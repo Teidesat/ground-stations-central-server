@@ -1,13 +1,12 @@
 from ninja import Schema
-from datetime import datetime
 
-    
+
 class UserSchema(Schema):
     username: str
-    email: str = None
-    first_name: str = None
-    last_name: str = None
+    email: str = ''
+    first_name: str = ''
+    last_name: str = ''
+
 
 class UserError(Schema):
-    message:str
-    
+    message: str
