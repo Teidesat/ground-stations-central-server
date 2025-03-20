@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 api = NinjaAPI()
 
-api.add_router('/prueba', "prueba.api.router")
+api.add_router('/prueba', "analyze_image.api.router")
 
 
 
