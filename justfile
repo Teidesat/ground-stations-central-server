@@ -1,7 +1,7 @@
-project := file_stem(justfile_dir())
+project := file_stem(justfile_directory())
 venv-name := ".venv"
-venv-path := join(justfile_dir(), venv-name)
-pip-cmd := shell('if [ -x "$(command -v uv)" ]; then echo "uv pip"; else echo "pip"; fi')
+venv-path := join(justfile_directory(), venv-name)
+
 
 # ==============================================================================
 # DJANGO RECIPES
@@ -69,17 +69,13 @@ check-venv: create-venv
         exit 1
     fi
 
-alias i := install-reqs
-# Install project requirements
-install-reqs: check-venv
-    {{ pip-cmd }} install -r requirements.txt
 
 # ==============================================================================
 # DJANGO AUX RECIPES
 # ==============================================================================
 
 # Setup a Django project
-setup: install-reqs && migrate create-su
+setup: migrate create-su
     #!/usr/bin/env bash
     django-admin startproject main .
     sed -i -E "s/(TIME_ZONE).*/\1 = 'Atlantic\/Canary'/" ./main/settings.py
@@ -102,7 +98,7 @@ create-su username="admin" password="admin" email="admin@example.com":
 # https://medium.com/@mustahibmajgaonkar/how-to-reset-django-migrations-6787b2a1e723
 # https://stackoverflow.com/a/76300128
 # Remove migrations and database. Reset DB artefacts.
-[confirm("⚠️ All migrations and database will be removed. Continue? [yN]:")]
+[confirm]
 reset-db: && create-su
     #!/usr/bin/env bash
     find . -path "*/migrations/*.py" ! -path "./.venv/*" ! -name "__init__.py" -delete
