@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_results',
     'apps.analyze_image',
     'apps.buffer.apps.BufferConfig',
 ]
@@ -126,6 +127,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery conf
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"  # Usando Redis como broker
+CELERY_BROKER_URL = "redis://redis:6379/0"  # Usando Redis como broker
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_EXTENDED = True
+

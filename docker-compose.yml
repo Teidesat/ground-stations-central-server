@@ -1,0 +1,46 @@
+name: ground-station-central-server
+
+services:
+  app:
+    build: .
+    image: ground-station-central-image
+    container_name: ground-station-central-container
+    command: /app/entrypoint.sh
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+  
+  redis:
+    image: "redis:alpine"
+    container_name: my-redis-container
+    restart: unless-stopped
+    ports: 
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    image: ground-station-central-image
+    container_name: my-celery-container
+    command: celery -A main worker -E -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - app
+
+  flower:
+    image: ground-station-central-image
+    container_name: my-flower-container
+    command: celery -A main flower --basic_auth=admin:password123
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+
+volumes:
+  redis_data:
