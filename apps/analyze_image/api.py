@@ -46,7 +46,7 @@ def subir_imagen(request: HttpRequest, imagen: UploadedFile = File(...)):
 
         img = Imagen.objects.create(content=imagen, header=metadata, exif=exif_dict, fecha=date)
 
-    # img = Imagen.objects.create(content=imagen, header=metadata, exif=exif_dict)
+    img = Imagen.objects.create(content=imagen, header=metadata, exif=exif_dict)
 
     return 'Ok'
 

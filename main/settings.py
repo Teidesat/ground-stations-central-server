@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-6k&l-+f$pw#*%v3r^j#85z0@g$d#xwq8rp5j(wp=i=fjsnfiej
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_results',
     'apps.analyze_image',
-    'apps.buffer.apps.BufferConfig',
 ]
 
 MIDDLEWARE = [
