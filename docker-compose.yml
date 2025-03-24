@@ -11,8 +11,24 @@ services:
     volumes:
       - .:/app
     depends_on:
+      - postgres
       - redis
   
+  postgres:
+    image: postgres
+    container_name: my-postgres-container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+
   redis:
     image: "redis:alpine"
     container_name: my-redis-container
@@ -43,4 +59,5 @@ services:
 
 
 volumes:
+  postgres_data:
   redis_data:

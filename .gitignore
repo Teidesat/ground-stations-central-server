@@ -7,6 +7,8 @@ db.sqlite3
 venv/
 env/
 
+.env
+
 *.pyo
 *.pyd
 __pycache__/
@@ -30,3 +32,6 @@ node_modules
 
 media/*
 !media/README.md
+
+dump.rdb
+
