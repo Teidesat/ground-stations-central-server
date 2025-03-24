@@ -6,5 +6,5 @@ from .models import Imagen
 class ImagenAdmin(admin.ModelAdmin):
     list_display = (
         'format',
-        'created_at'
+        'created_at',
     )

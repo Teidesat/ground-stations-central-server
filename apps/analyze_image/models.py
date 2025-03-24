@@ -9,16 +9,14 @@ class Imagen(models.Model):
     exif = models.TextField(null=True)
     fecha = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now=True)
+    raw_data = models.TextField()
     content = models.ImageField(
         upload_to='media',
+        blank=True,
+        null=True, 
     )
     
-'''
-    def save(self, *args, **kwargs):
-        exif = ast.literal_eval(self.exif)
-        date = datetime.strptime(exif["DateTime"], "%Y:%m:%d %H:%M:%S")
-        self.fecha = date
-        super().save(*args, **kwargs)
-'''   
     
-   
+    def __str__(self):
+       return f'Img {self.raw_data}'
+    
