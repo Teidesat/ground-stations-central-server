@@ -2,8 +2,8 @@ from django.contrib.auth.models import User
 from ninja import NinjaAPI, UploadedFile, File
 import asyncio
 from .schemas import UserError, UserSchema, MsgSchema
-from .buffer import DataBuffer
-from .classifier import Classifier
+from utils.classifier import Classifier
+from utils.buffer import DataBuffer
 
 
 api = NinjaAPI()
