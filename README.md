@@ -63,7 +63,7 @@ docker-compose up -d
 ```
 6. For try api endpoints:
 <br>
-<a href="http://localhost/api/docs"> Click here to check endpoints</a>
+<a href="http://localhost:8000/api/docs"> Click here to check endpoints</a>
 
 ## License
 
