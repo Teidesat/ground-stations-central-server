@@ -1,7 +1,7 @@
 from apps.analyze_image.task import run_tasks
 from apps.analyze_image.models import Imagen
 from .buffer import StackBuffer
-from asgiref.sync import sync_to_async
+
 
 
 class Classifier():

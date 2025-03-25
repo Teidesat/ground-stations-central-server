@@ -20,7 +20,6 @@ class BaseSerializer(ABC):
     def build_url(self, path: str) -> str:
         return self.request.build_absolute_uri(path) if self.request else path
 
-    # To be implemented by subclasses
     def serialize_instance(self, instance: object) -> dict:
         raise NotImplementedError
 

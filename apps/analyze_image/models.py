@@ -1,7 +1,6 @@
 from django.db import models
-import ast
 
-# Create your models here.
+
 
 class Imagen(models.Model):
     format = models.CharField(max_length=10, null=True)
