@@ -17,3 +17,6 @@ class DataBuffer:
     def task_done(self):
         """Indica que el dato fue procesado."""
         self.queue.task_done()
+
+    def __repr__(self):
+        return "Soy el data buffer"

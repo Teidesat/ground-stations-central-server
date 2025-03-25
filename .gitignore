@@ -9,6 +9,10 @@ env/
 
 .env
 
+test-media-img
+
+
+
 *.pyo
 *.pyd
 __pycache__/

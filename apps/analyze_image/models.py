@@ -18,5 +18,5 @@ class Imagen(models.Model):
     
     
     def __str__(self):
-       return f'Img {self.raw_data}'
+       return f'Img {self.pk}'
     
