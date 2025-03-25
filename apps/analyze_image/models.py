@@ -8,7 +8,7 @@ class Imagen(models.Model):
     header = models.TextField(null= True, blank=True)
     exif = models.TextField(null=True)
     fecha = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     raw_data = models.TextField()
     content = models.ImageField(
         upload_to='media',

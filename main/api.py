@@ -1,12 +1,11 @@
 from ninja import NinjaAPI, UploadedFile
-import asyncio
+
 from utils.classifier import Classifier
-from utils.buffer import DataBuffer
+from utils.buffer import StackBuffer
 
 api = NinjaAPI()
-main_buffer = DataBuffer(maxsize=10)
 classifier = Classifier()
-
+stack_buffer = StackBuffer(maxsize=30)
 
 api.add_router('/analyze-image', 'apps.analyze_image.api.router')
 
@@ -14,11 +13,9 @@ api.add_router('/analyze-image', 'apps.analyze_image.api.router')
 @api.post('/')
 async def recibir_datos(request, files:list[UploadedFile]):
     for file in files:
-        try:
-            await main_buffer.add_data(data=file)
-            data = await main_buffer.get_data()
-            data_content = data.read()
-            await classifier.identificar_tipo(data.content_type, data_content)
-            print ('Todo ha funcionado')
-        except:
-            print('Todo mal')
+        stack_buffer.add(file)
+
+    while not stack_buffer.is_empty():
+        data = stack_buffer.get()
+        data_content = data.read()
+        await classifier.identificar_tipo(data.content_type, data_content)

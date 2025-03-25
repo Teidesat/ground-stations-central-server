@@ -1,21 +1,23 @@
-
+from apps.analyze_image.task import run_tasks
 from apps.analyze_image.models import Imagen
-from .buffer import DataBuffer
+from .buffer import StackBuffer
+from asgiref.sync import sync_to_async
 
 
 class Classifier():
     def __init__(self):
-        self.images = DataBuffer()
-        self.datos = DataBuffer()
+        self.images = StackBuffer(maxsize=30)
+        self.datos = StackBuffer(maxsize=30)
 
     async def identificar_tipo(self, type_data:str, data):
         type_data_cleaned = type_data.split('/')[0]
+        data_format = type_data.split('/')[1]
 
         if type_data_cleaned == "image":
-            print('se clasifica')
-            img = await Imagen.objects.acreate(raw_data=data)
-            
-            self.images.add_data(img)
+            img = await Imagen.objects.acreate(format=data_format, raw_data=data)
+            self.images.add(img)
+            imagen = self.images.get()
+            await run_tasks(imagen)
         else:
-            self.datos.add_data(data)
+            self.datos.add(data)
 
