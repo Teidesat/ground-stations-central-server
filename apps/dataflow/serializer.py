@@ -7,7 +7,7 @@ class SatelliteDataSerializer(BaseSerializer):
     def serialize_instance(self, instance) -> dict:
         return {
             'id': instance.pk,
-            'categort': instance.category,
+            'category': instance.get_category_display(),
             'content': instance.content,
             'timestamp': instance.timestamp.isoformat(),
         }
