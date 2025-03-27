@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_celery_results',
     'apps.analyze_image',
+    'apps.dataflow.apps.DataflowConfig',
+    'apps.logvault.apps.LogvaultConfig',
 ]
 
 MIDDLEWARE = [
