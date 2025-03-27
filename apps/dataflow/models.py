@@ -1,15 +1,14 @@
 from django.db import models
 
 class SatelliteData(models.Model):
-    CATEGORY_CHOICES = [
-        ("TEMP", "temperature"),
-        ("POWR", "power"),
-        ("HUMI", "humidity"),
-        ("POSI", "position"),
-        ("GENE", "general"),
-    ] 
+    class CATEGORY_CHOICES(models.TextChoices):
+        TEMPERATURE = "TEMP", "temperature"
+        POWER = "POWR", "power"
+        HUMIDITY = "HUMI", "humidity"
+        POSITION = "POSI", "position"
+        GENERAL = "GENE", "general"
 
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default=CATEGORY_CHOICES.GENE)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default=CATEGORY_CHOICES.GENERAL)
     content = models.JSONField()
     timestamp = models.DateTimeField()
 
