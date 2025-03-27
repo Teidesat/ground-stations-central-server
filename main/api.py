@@ -8,6 +8,9 @@ classifier = Classifier()
 stack_buffer = StackBuffer(maxsize=30)
 
 api.add_router('/analyze-image', 'apps.analyze_image.api.router')
+api.add_router('/dataflow', 'apps.dataflow.api.router')
+api.add_router('/logvault', 'apps.logvault.api.router')
+
 
 
 @api.post('/')
