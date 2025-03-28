@@ -11,13 +11,11 @@ def crear_directorio():
         os.makedirs(MEDIA_DIR)
 
 def generar_imagenes():
-    
     for i in range(NUM_IMAGENES):
         img = Image.new('RGB', (100, 100), color='red')
         img_bytes = io.BytesIO()
         img.save(img_bytes, format='PNG')
-        
-        
+
         with open(os.path.join(MEDIA_DIR, f"test_image_{i}.png"), "wb") as f:
             f.write(img_bytes.getvalue())
 
