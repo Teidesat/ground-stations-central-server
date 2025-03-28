@@ -1,15 +1,16 @@
-from ninja import Router
+from ninja import Router, Query
 from .serializer import LogSerializer
 from .models import LogEntry
 from django.http import JsonResponse
-from .schema import LogSchema
+from .schemas import LogFilterSchema
 router = Router()
 
 
 @router.get('/')
-def all_logs(request):
+def all_logs(request, filters:LogFilterSchema = Query(...)):
     try:
         logs = LogEntry.objects.all()
+        logs = filters.filter(logs)
         logs_json = LogSerializer(logs, request=request)
         return logs_json.json_response()
     except LogEntry.DoesNotExist:
