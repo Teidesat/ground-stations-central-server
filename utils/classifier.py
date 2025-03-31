@@ -1,5 +1,7 @@
 from apps.analyze_image.task import run_tasks
+from apps.dataflow.tasks import run_data_tasks
 from apps.analyze_image.models import Imagen
+from apps.dataflow.models import SatelliteData
 from .buffer import StackBuffer
 
 
@@ -18,6 +20,11 @@ class Classifier():
             self.images.add(img)
             imagen = self.images.get()
             await run_tasks(imagen)
+        elif type_data_cleaned == 'application' and data_format == 'octet-stream':
+            data_raw =  await SatelliteData.objects.acreate(raw_data=data) 
+            self.datos.add(data_raw)
+            data_obj = self.datos.get()
+            await run_data_tasks(data_obj)
         else:
-            self.datos.add(data)
+            print('Esto no es un binario')
 

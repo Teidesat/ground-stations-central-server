@@ -9,5 +9,5 @@ class SatelliteDataSerializer(BaseSerializer):
             'id': instance.pk,
             'category': instance.get_category_display(),
             'content': instance.content,
-            'timestamp': instance.timestamp.isoformat(),
+            'timestamp': instance.timestamp.isoformat() if instance.timestamp is not None else '',
         }

@@ -5,7 +5,7 @@ from utils.buffer import StackBuffer
 
 api = NinjaAPI()
 classifier = Classifier()
-stack_buffer = StackBuffer(maxsize=30)
+stack_buffer = StackBuffer(maxsize=60)
 
 api.add_router('/analyze-image', 'apps.analyze_image.api.router')
 api.add_router('/dataflow', 'apps.dataflow.api.router')

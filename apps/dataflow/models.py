@@ -9,8 +9,9 @@ class SatelliteData(models.Model):
         GENERAL = "GENE", "general"
 
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default=CATEGORY_CHOICES.GENERAL)
-    content = models.JSONField()
-    timestamp = models.DateTimeField()
+    content = models.JSONField(blank=True, null=True)
+    timestamp = models.DateTimeField(blank=True, null=True)
+    raw_data = models.TextField(default='')
 
     def __str__(self):
         return f"{self.timestamp} - {self.category} ({self.id})"

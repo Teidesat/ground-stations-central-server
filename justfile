@@ -8,26 +8,26 @@ venv-path := join(justfile_directory(), venv-name)
 # ==============================================================================
 
 # Launch development server
-runserver: check-venv kill-runservers
+runserver: kill-runservers
     ./manage.py runserver
 
 # Launch Django interactive shell
-sh: check-venv
+sh:
     ./manage.py shell
 
 alias mm := makemigrations
 # Make Django migrations
-makemigrations: check-venv
+makemigrations:
     ./manage.py makemigrations
     
 alias m := migrate
 # Apply Django migrations
-migrate: check-venv
+migrate:
     ./manage.py migrate
 
 alias c := check
 # Check if Django project is correct
-check: check-venv
+check:
     ./manage.py check
 
 # Add a new app and install it on settings.py
@@ -58,8 +58,7 @@ create-venv:
 
 # Check if Python virtualenv is activated
 [private]
-[no-exit-message]
-check-venv: create-venv
+[no-exit-message]: create-venv
     #!/usr/bin/env bash
     if [ "$VIRTUAL_ENV" != "{{ venv-path }}" ]; then
         echo Project virtualenv: {{ venv-path }}
@@ -109,12 +108,12 @@ reset-db: && create-su
     echo
 
 # Launch worker for Redis Queue (RQ)
-rq: check-venv redis
+rq: redis
     watchmedo auto-restart --pattern=tasks.py --recursive -- ./manage.py rqworker
 
 # Generate fake data and populate Django database
 [private]
-@gen-data *args: check-venv clean-data
+@gen-data *args: clean-data
     #!/usr/bin/env bash
     ./manage.py gen_data {{ args }}
 
@@ -148,7 +147,7 @@ show-users:
     ' 
 
 # Load fixtures into database
-load-data: check-venv clean-data
+load-data: clean-data
     #!/usr/bin/env bash
     for model in auth users categories platforms games orders; do
         ./manage.py loaddata fixtures/$model.json
