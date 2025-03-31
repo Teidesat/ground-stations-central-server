@@ -44,30 +44,6 @@ startapp app:
 # ==============================================================================
 
 # Create a Python virtualenv
-create-venv:
-    #!/usr/bin/env bash
-    if [ ! -d {{ venv-name }} ]
-    then
-        if [ -x "$(command -v uv)" ]
-        then
-            uv venv --seed
-        else
-            python -m venv {{ venv-name }} --prompt {{ project }}
-        fi
-    fi
-
-# Check if Python virtualenv is activated
-[private]
-[no-exit-message]: create-venv
-    #!/usr/bin/env bash
-    if [ "$VIRTUAL_ENV" != "{{ venv-path }}" ]; then
-        echo Project virtualenv: {{ venv-path }}
-        echo Active virtualenv: $VIRTUAL_ENV
-        echo
-        echo You must activate the right virtualenv!
-        exit 1
-    fi
-
 
 # ==============================================================================
 # DJANGO AUX RECIPES

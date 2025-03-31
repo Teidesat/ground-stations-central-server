@@ -4,6 +4,7 @@
 ![django ninja 1.3](https://img.shields.io/badge/1.3-blue?color=blue&label=django-ninja&logo=fastapi&logoColor=white)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Version](https://img.shields.io/badge/alpha-0.0.0-yellow.svg)
+
 > From TEIDESAT Project and Hyperspace Canarias
 
 ## Description
@@ -18,8 +19,6 @@ GSCS is a server that receives raw data from the Optical Ground Station (OGS), c
 
 - Double buffer for efficiency.
 
-- Initial Pointing (ApIni) and Detection & Tracking (DyT).
-
 - Backend based on Django Ninja.
 
 - API for accessing processed data.
@@ -32,7 +31,7 @@ Make sure you have installed:
 
 - Docker Compose
 
-## Installation and Execution   
+## Installation and Execution
 
 To run the project with Docker Compose, follow these steps:
 
@@ -61,11 +60,11 @@ docker-compose down
 ```bash
 docker-compose up -d
 ```
+
 6. For try api endpoints:
-<br>
-<a href="http://localhost:8000/api/docs"> Click here to check endpoints</a>
+   <br>
+   <a href="http://localhost:8000/api/docs"> Click here to check endpoints</a>
 
 ## License
 
 This project is licensed under GPL-3.0.
-
