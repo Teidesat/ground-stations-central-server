@@ -3,10 +3,12 @@ from .models import Imagen
 from .serializer import ImageSerializer
 from .schemas import ImageFilterSchema
 from django.http import JsonResponse
+from main.auth import SimpleTokenAuth
 router = Router()
 
+auth = SimpleTokenAuth()
 
-@router.get('/')
+@router.get('/', auth=auth) 
 def all_images(request, filters:ImageFilterSchema = Query(...)):
     try:
         images = Imagen.objects.all()
