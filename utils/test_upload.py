@@ -6,6 +6,8 @@ import random
 from datetime import datetime
 from PIL import Image
 
+
+API_TOKEN = 'holis123'
 NUM_IMAGENES = 30  
 NUM_DATOS_SATELLITE = 30 
 MEDIA_DIR = "test-media-img" 
@@ -43,6 +45,11 @@ def generar_datos_satellite():
 def enviar_archivos():
     url = "http://127.0.0.1:8000/api/"
     
+    headers = {
+        "Authorization": f"Bearer {API_TOKEN}"
+    }
+
+
     files = [
         ('files', (f'test_image_{i}.png', open(os.path.join(MEDIA_DIR, f'test_image_{i}.png'), 'rb'), 'image/png')) 
         for i in range(NUM_IMAGENES)
@@ -53,7 +60,7 @@ def enviar_archivos():
     for i in range(NUM_DATOS_SATELLITE):
         files.append(('files', (f'satellite_data_{i}.bin', open(os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin'), 'rb'), 'application/octet-stream')))
     
-    response = requests.post(url, files=files)
+    response = requests.post(url,headers=headers ,files=files)
     print(response.text)
 
 if __name__ == "__main__":

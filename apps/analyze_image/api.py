@@ -3,17 +3,35 @@ from .models import Imagen
 from .serializer import ImageSerializer
 from .schemas import ImageFilterSchema
 from django.http import JsonResponse
-from main.auth import SimpleTokenAuth
+from utils.helpers import create_log
 router = Router()
 
-auth = SimpleTokenAuth()
 
-@router.get('/', auth=auth) 
-def all_images(request, filters:ImageFilterSchema = Query(...)):
+@router.get('/') 
+async def all_images(request, filters:ImageFilterSchema = Query(...)):
     try:
         images = Imagen.objects.all()
         images = filters.filter(images)
         images_json = ImageSerializer(images, request=request)
+
+        await create_log(
+            level= 'INFO',
+            logger='ground-stations-central-server',
+            module='analyze_image.api',
+            function='all_images',
+            message= f'Petición realizada',
+            request=request
+        )
+
         return images_json.json_response()
-    except:
+    
+    except Exception as e:
+        await create_log(
+            level= 'ERROR',
+            logger='ground-stations-central-server',
+            module='analyze_image.api',
+            function='all_images',
+            message= f'ERROR en el procesamiento de la imagen: {e}',
+            request=request
+        )
         return JsonResponse({'error': 'No images available'}, status=404)

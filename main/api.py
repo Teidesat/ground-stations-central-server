@@ -1,9 +1,9 @@
 from ninja import NinjaAPI, UploadedFile
-
+from main.auth import SimpleTokenAuth
 from utils.classifier import Classifier
 from utils.buffer import StackBuffer
 
-api = NinjaAPI()
+api = NinjaAPI(auth=SimpleTokenAuth())
 classifier = Classifier()
 stack_buffer = StackBuffer(maxsize=60)
 
