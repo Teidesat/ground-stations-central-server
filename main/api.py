@@ -2,6 +2,7 @@ from ninja import NinjaAPI, UploadedFile
 from main.auth import SimpleTokenAuth
 from utils.classifier import Classifier
 from utils.buffer import StackBuffer
+from utils.helpers import create_log
 
 api = NinjaAPI(auth=SimpleTokenAuth())
 classifier = Classifier()
@@ -18,7 +19,28 @@ async def recibir_datos(request, files:list[UploadedFile]):
     for file in files:
         stack_buffer.add(file)
 
+    await create_log(
+        level = 'INFO',
+        logger = 'ground-stations-central-server',
+        module = 'main',
+        function= 'main.api',
+        message= f'Iniciada la conexión con un total de {len(files)} archivos',
+        request=request,
+        request_status_code=200,
+    )
+
+
     while not stack_buffer.is_empty():
         data = stack_buffer.get()
         data_content = data.read()
         await classifier.identificar_tipo(data.content_type, data_content)
+    
+    await create_log(
+        level = 'INFO',
+        logger = 'ground-stations-central-server',
+        module = 'main',
+        function= 'main.api',
+        message= f'Finalizada la conexión con un total de {len(files)} archivos',
+        request=request,
+        request_status_code=200,
+    )
