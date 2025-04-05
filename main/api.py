@@ -44,3 +44,8 @@ async def recibir_datos(request, files:list[UploadedFile]):
         request=request,
         request_status_code=200,
     )
+
+
+@api.post('/RGS')
+async def entry_rgs(request):
+    pass
