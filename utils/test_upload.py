@@ -8,8 +8,8 @@ from PIL import Image
 
 
 API_TOKEN = 'holis123'
-NUM_IMAGENES = 30  
-NUM_DATOS_SATELLITE = 30 
+NUM_IMAGENES = 100  
+NUM_DATOS_SATELLITE = 100
 MEDIA_DIR = "test-media-img" 
 
 CATEGORY_CHOICES = ["TEMP", "POWR", "HUMI", "POSI", "GENE"]
@@ -48,7 +48,6 @@ def enviar_archivos():
     headers = {
         "Authorization": f"Bearer {API_TOKEN}"
     }
-
 
     files = [
         ('files', (f'test_image_{i}.png', open(os.path.join(MEDIA_DIR, f'test_image_{i}.png'), 'rb'), 'image/png')) 
