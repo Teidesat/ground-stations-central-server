@@ -4,7 +4,7 @@ from .serializer import SatelliteDataSerializer
 from django.http import JsonResponse
 from .schemas import SatelliteDataFilterSchema
 from utils.helpers import create_log
-
+from asgiref.sync import sync_to_async
 
 router = Router()
 
@@ -23,9 +23,8 @@ async def all_satellite_data(request, filters: SatelliteDataFilterSchema = Query
             request=request
         )
 
-
-
-        return data_json.json_response()
+        return await sync_to_async(data_json.json_response)()
+    
     except SatelliteData.DoesNotExist as e :
         await create_log(
             level= 'ERROR',
@@ -33,9 +32,8 @@ async def all_satellite_data(request, filters: SatelliteDataFilterSchema = Query
             module='dataflow.api',
             function='all_satellite_data',
             message= f'ERROR en el procesamiento del dato: {e}',
-            request=request
+            request=request,
+            exception=e,
         )
 
         return JsonResponse({'error': 'No data available'}, status=404)
-    except:
-        return JsonResponse({'error': 'Error interno'}, status=500)

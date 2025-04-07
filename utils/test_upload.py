@@ -8,7 +8,7 @@ from PIL import Image
 
 
 API_TOKEN = 'holis123'
-NUM_IMAGENES = 100  
+NUM_IMAGENES = 100
 NUM_DATOS_SATELLITE = 100
 MEDIA_DIR = "test-media-img" 
 

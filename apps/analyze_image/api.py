@@ -4,6 +4,7 @@ from .serializer import ImageSerializer
 from .schemas import ImageFilterSchema
 from django.http import JsonResponse
 from utils.helpers import create_log
+from asgiref.sync import sync_to_async
 router = Router()
 
 
@@ -23,7 +24,7 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
             request=request
         )
 
-        return images_json.json_response()
+        return sync_to_async(images_json.json_response)()
     
     except Exception as e:
         await create_log(
@@ -32,6 +33,7 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
             module='analyze_image.api',
             function='all_images',
             message= f'ERROR en el procesamiento de la imagen: {e}',
-            request=request
+            request=request, 
+            exception=e,
         )
         return JsonResponse({'error': 'No images available'}, status=404)

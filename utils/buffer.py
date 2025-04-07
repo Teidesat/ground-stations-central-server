@@ -1,4 +1,5 @@
 
+
 class StackBuffer:
     def __init__(self, maxsize:int):
         self.maxsize = maxsize
