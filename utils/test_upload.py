@@ -9,7 +9,7 @@ from PIL import Image
 
 API_TOKEN = 'holis123'
 NUM_IMAGENES = 0
-NUM_DATOS_SATELLITE = 10
+NUM_DATOS_SATELLITE = 100
 MEDIA_DIR = 'test-media-img'
 CATEGORY_CHOICES = ['TEMP', 'POWR', 'HUMI', 'POSI', 'GENE']
 BASE_URL = 'http://127.0.0.1:8000/api/'
