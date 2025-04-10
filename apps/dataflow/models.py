@@ -16,5 +16,11 @@ class SatelliteData(models.Model):
     timestamp = models.DateTimeField(blank=True, null=True)
     raw_data = models.TextField(default='')
 
+    def save(self, *args, **kwargs):
+        if not self.content:
+            return
+
+        super(SatelliteData, self).save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.timestamp} - {self.category} ({self.id})'
