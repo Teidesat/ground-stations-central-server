@@ -15,9 +15,10 @@ MEDIA_DIR = './media'
 CATEGORY_CHOICES = ['TEMP', 'POWR', 'HUMI', 'POSI', 'GENE']
 
 
-def crear_directorio():
-    if not os.path.exists(MEDIA_DIR):
-        os.makedirs(MEDIA_DIR)
+def crear_directorio(directorio):
+    """Crea un directorio si no existe."""
+    if not os.path.exists(directorio):
+        os.makedirs(directorio)
 
 
 def limpiar_directorio(directorio):
@@ -30,9 +31,8 @@ def limpiar_directorio(directorio):
 
 
 def generar_imagenes():
-    if not os.path.exists(TEST_MEDIA_DIR):
-        os.makedirs(TEST_MEDIA_DIR)
-
+    """Genera imágenes aleatorias y las guarda en el directorio TEST_MEDIA_DIR."""
+    crear_directorio(TEST_MEDIA_DIR)
     limpiar_directorio(TEST_MEDIA_DIR)
 
     for i in range(NUM_IMAGENES):
@@ -44,6 +44,7 @@ def generar_imagenes():
         )
         draw = ImageDraw.Draw(img)
 
+        # Rellenar la imagen con puntos de color aleatorio
         for y in range(height):
             for x in range(width):
                 r = (x + y) % 256
@@ -55,6 +56,7 @@ def generar_imagenes():
             (random.randint(10, 50), random.randint(10, 50)), f'Img {i}', fill=(255, 255, 255)
         )
 
+        # Dibujar formas aleatorias
         for _ in range(random.randint(5, 15)):
             shape_type = random.choice(['circle', 'rectangle', 'line'])
             x1, y1 = random.randint(0, width), random.randint(0, height)
@@ -71,8 +73,10 @@ def generar_imagenes():
             elif shape_type == 'line':
                 draw.line([x1, y1, x2, y2], fill=color, width=2)
 
+        # Guardar la imagen generada
         img_path = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
         img.save(img_path, format='PNG')
+        print(f'Imagen generada: {img_path}')
 
 
 def generar_datos_binarios():
@@ -89,6 +93,7 @@ def generar_datos_binarios():
 
 
 def generar_datos_satellite():
+    """Genera archivos binarios con datos de satélite en formato JSON."""
     base_time = datetime.utcnow()
     for i in range(NUM_DATOS_SATELLITE):
         category = random.choice(CATEGORY_CHOICES)
@@ -122,8 +127,10 @@ def generar_datos_satellite():
         }
 
         binary_data = json.dumps(data).encode('utf-8')
-        with open(os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin'), 'wb') as f:
+        satellite_path = os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin')
+        with open(satellite_path, 'wb') as f:
             f.write(binary_data)
+        print(f'Dato satelital generado: {satellite_path}')
 
 
 def enviar_archivos():
@@ -187,7 +194,7 @@ def enviar_archivos():
 
 
 if __name__ == '__main__':
-    crear_directorio()
+    crear_directorio(MEDIA_DIR)
     generar_imagenes()
     generar_datos_binarios()
     generar_datos_satellite()
