@@ -3,7 +3,7 @@ from .models import Imagen
 from .serializer import ImageSerializer
 from .schemas import ImageFilterSchema
 from django.http import JsonResponse
-from utils.helpers import create_log
+from utils.helpers import create_log, filter_exists
 from asgiref.sync import sync_to_async
 router = Router()
 
@@ -13,7 +13,11 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
     try:
         images = Imagen.objects.all()
         images = filters.filter(images)
-        images_json = ImageSerializer(images, request=request)
+        if sync_to_async(images.exists)():
+            images_json = ImageSerializer(images, request=request)
+        else:
+            return JsonResponse({'Error': 'No images available'}, status=404)
+
 
         await create_log(
             level= 'INFO',
@@ -24,7 +28,7 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
             request=request
         )
 
-        return sync_to_async(images_json.json_response)()
+        return await sync_to_async(images_json.json_response)()
     
     except Exception as e:
         await create_log(
@@ -36,4 +40,4 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
             request=request, 
             exception=e,
         )
-        return JsonResponse({'error': 'No images available'}, status=404)
+        return JsonResponse({'Error': 'No images available'}, status=404)
