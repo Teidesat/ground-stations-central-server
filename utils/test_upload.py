@@ -7,9 +7,10 @@ import requests
 from PIL import Image, ImageDraw
 
 API_TOKEN = 'holis123'
-NUM_IMAGENES = 0
-NUM_DATOS_SATELLITE = 50
-MEDIA_DIR = 'test-media-img'
+NUM_IMAGENES = 10
+NUM_DATOS_SATELLITE = 15
+TEST_MEDIA_DIR = 'test-media-img'
+MEDIA_DIR = './media'
 
 CATEGORY_CHOICES = ['TEMP', 'POWR', 'HUMI', 'POSI', 'GENE']
 
@@ -19,23 +20,72 @@ def crear_directorio():
         os.makedirs(MEDIA_DIR)
 
 
+def limpiar_directorio(directorio):
+    """Elimina todos los archivos en el directorio dado."""
+    if os.path.exists(directorio):
+        for archivo in os.listdir(directorio):
+            ruta_archivo = os.path.join(directorio, archivo)
+            if os.path.isfile(ruta_archivo):
+                os.remove(ruta_archivo)
+
+
 def generar_imagenes():
+    if not os.path.exists(TEST_MEDIA_DIR):
+        os.makedirs(TEST_MEDIA_DIR)
+
+    limpiar_directorio(TEST_MEDIA_DIR)
+
     for i in range(NUM_IMAGENES):
+        width, height = 300, 300
         img = Image.new(
             'RGB',
-            (100, 100),
+            (width, height),
             color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
         )
         draw = ImageDraw.Draw(img)
-        draw.text((10, 10), f'Img {i}', fill=(255, 255, 255))
 
-        with open(os.path.join(MEDIA_DIR, f'test_image_{i}.png'), 'wb') as f:
-            img.save(f, format='PNG')
+        for y in range(height):
+            for x in range(width):
+                r = (x + y) % 256
+                g = (x * y) % 256
+                b = (x - y) % 256
+                draw.point((x, y), fill=(r, g, b))
+
+        draw.text(
+            (random.randint(10, 50), random.randint(10, 50)), f'Img {i}', fill=(255, 255, 255)
+        )
+
+        for _ in range(random.randint(5, 15)):
+            shape_type = random.choice(['circle', 'rectangle', 'line'])
+            x1, y1 = random.randint(0, width), random.randint(0, height)
+            x2, y2 = random.randint(0, width), random.randint(0, height)
+
+            x1, x2 = min(x1, x2), max(x1, x2)
+            y1, y2 = min(y1, y2), max(y1, y2)
+
+            color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            if shape_type == 'circle':
+                draw.ellipse([x1, y1, x2, y2], outline=color, width=2)
+            elif shape_type == 'rectangle':
+                draw.rectangle([x1, y1, x2, y2], outline=color, width=2)
+            elif shape_type == 'line':
+                draw.line([x1, y1, x2, y2], fill=color, width=2)
+
+        img_path = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
+        img.save(img_path, format='PNG')
 
 
 def generar_datos_binarios():
-    with open(os.path.join(MEDIA_DIR, 'test_data.bin'), 'wb') as f:
-        f.write(os.urandom(1024))
+    """Genera un archivo binario con datos aleatorios solo si NUM_DATOS_SATELLITE es mayor que 0."""
+    if NUM_DATOS_SATELLITE <= 0:
+        print('No se generarán datos binarios porque NUM_DATOS_SATELLITE es 0 o menor.')
+        return
+
+    # Crear el archivo binario solo si es necesario
+    binary_path = os.path.join(MEDIA_DIR, 'test_data.bin')
+    with open(binary_path, 'wb') as f:
+        f.write(os.urandom(1024))  # Escribe datos aleatorios de 1024 bytes
+        print(f'Datos binarios generados: {binary_path}')
 
 
 def generar_datos_satellite():
@@ -43,17 +93,16 @@ def generar_datos_satellite():
     for i in range(NUM_DATOS_SATELLITE):
         category = random.choice(CATEGORY_CHOICES)
         value_range = {
-            'TEMP': (0, 50),  # Temperatura en °C
-            'POWR': (0, 100),  # Potencia en %
-            'HUMI': (0, 100),  # Humedad en %
-            'POSI': (-180, 180),  # Coordenadas
-            'GENE': (0, 1000),  # Datos generales
+            'TEMP': (0, 50),
+            'POWR': (0, 100),
+            'HUMI': (0, 100),
+            'POSI': (-180, 180),
+            'GENE': (0, 1000),
         }
 
         value = round(random.uniform(*value_range[category]), 2)
         content = {'value': value}
 
-        # Agregar detalles específicos por categoría
         if category == 'TEMP':
             content['unit'] = '°C'
         elif category == 'POSI':
@@ -78,44 +127,61 @@ def generar_datos_satellite():
 
 
 def enviar_archivos():
+    """Envía los archivos generados al servidor."""
     url = 'http://127.0.0.1:8000/api/'
     headers = {'Authorization': f'Bearer {API_TOKEN}'}
 
-    files = [
-        (
-            'files',
-            (
-                f'test_image_{i}.png',
-                open(os.path.join(MEDIA_DIR, f'test_image_{i}.png'), 'rb'),
-                'image/png',
-            ),
-        )
-        for i in range(NUM_IMAGENES)
-    ]
+    files = []
 
-    files.append(
-        (
-            'files',
-            (
-                'test_data.bin',
-                open(os.path.join(MEDIA_DIR, 'test_data.bin'), 'rb'),
-                'application/octet-stream',
-            ),
-        )
-    )
+    # Incluir imágenes
+    for i in range(NUM_IMAGENES):
+        img_path = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
+        if os.path.exists(img_path):
+            files.append(
+                (
+                    'files',
+                    (
+                        f'test_image_{i}.png',
+                        open(img_path, 'rb'),
+                        'image/png',
+                    ),
+                )
+            )
 
-    for i in range(NUM_DATOS_SATELLITE):
+    # Incluir datos binarios si existen
+    binary_path = os.path.join(MEDIA_DIR, 'test_data.bin')
+    if os.path.exists(binary_path):
         files.append(
             (
                 'files',
                 (
-                    f'satellite_data_{i}.bin',
-                    open(os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin'), 'rb'),
+                    'test_data.bin',
+                    open(binary_path, 'rb'),
                     'application/octet-stream',
                 ),
             )
         )
 
+    # Incluir datos satelitales si existen
+    for i in range(NUM_DATOS_SATELLITE):
+        satellite_path = os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin')
+        if os.path.exists(satellite_path):
+            files.append(
+                (
+                    'files',
+                    (
+                        f'satellite_data_{i}.bin',
+                        open(satellite_path, 'rb'),
+                        'application/octet-stream',
+                    ),
+                )
+            )
+
+    if not files:
+        print('No hay archivos para enviar.')
+        return
+
+    # Enviar los archivos al servidor
     response = requests.post(url, headers=headers, files=files)
     print(response.text)
 
