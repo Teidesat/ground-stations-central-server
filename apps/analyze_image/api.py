@@ -13,7 +13,7 @@ async def all_images(request, filters:ImageFilterSchema = Query(...)):
     try:
         images = Imagen.objects.all()
         images = filters.filter(images)
-        if sync_to_async(images.exists)():
+        if await sync_to_async(images.exists)():
             images_json = ImageSerializer(images, request=request)
         else:
             return JsonResponse({'Error': 'No images available'}, status=404)
