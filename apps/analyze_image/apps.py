@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class AnalyzeImageConfig(AppConfig):
+class Analyze_ImageConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.analyze_image'
 
