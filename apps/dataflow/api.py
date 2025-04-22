@@ -13,7 +13,11 @@ async def all_satellite_data(request, filters: SatelliteDataFilterSchema = Query
     try:
         data = SatelliteData.objects.all()
         data = filters.filter(data)
-        data_json = SatelliteDataSerializer(data, request=request)
+        if await sync_to_async(data.exists)():
+            data_json = SatelliteDataSerializer(data, request=request)
+        else:
+            return JsonResponse({'error': 'No data available'}, status=404)
+        
         await create_log(
             level= 'INFO',
             logger='ground-stations-central-server',

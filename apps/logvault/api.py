@@ -11,7 +11,10 @@ def all_logs(request, filters:LogFilterSchema = Query(...)):
     try:
         logs = LogEntry.objects.all()
         logs = filters.filter(logs)
-        logs_json = LogSerializer(logs, request=request)
+        if logs.exists():
+            logs_json = LogSerializer(logs, request=request)
+        else:
+            return JsonResponse({'error': 'No logs available'}, status=404)
         return logs_json.json_response()
     except LogEntry.DoesNotExist:
         return JsonResponse({'error': 'No logs available'}, status=404)
