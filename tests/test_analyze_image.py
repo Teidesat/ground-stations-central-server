@@ -1,10 +1,11 @@
 import pytest
+
 from main.settings import API_TOKEN
 
 
 def basic_test(client, query):
     headers = {
-        "HTTP_AUTHORIZATION": f"Bearer {API_TOKEN}"
+        'HTTP_AUTHORIZATION': f'Bearer {API_TOKEN}'
     }
     response = client.get(f'/api/analyze-image?{query}', **headers, follow=True)
 
@@ -26,8 +27,9 @@ def test_imagen_str():
 
 @pytest.mark.django_db
 def test_create_imagen_instance():
-    from apps.analyze_image.models import Imagen
     from django.utils import timezone
+
+    from apps.analyze_image.models import Imagen
 
     imagen = Imagen.objects.create(
         format='jpeg',
@@ -44,13 +46,14 @@ def test_create_imagen_instance():
 
 @pytest.mark.django_db
 def test_image_field_optional(client, tmpdir):
-    from apps.analyze_image.models import Imagen
     from django.core.files.uploadedfile import SimpleUploadedFile
 
-    img = Imagen.objects.create(format='png', raw_data='data')
-    assert img.content is None
+    from apps.analyze_image.models import Imagen
 
-    image_file = SimpleUploadedFile("test.png", b"file_content", content_type="image/png")
+    img = Imagen.objects.create(format='png', raw_data='data')
+    assert img.content.name is None
+
+    image_file = SimpleUploadedFile('test.png', b'file_content', content_type='image/png')
     img2 = Imagen.objects.create(format='png', raw_data='data', content=image_file)
     assert img2.content.name.startswith('media/test')
 
@@ -65,7 +68,7 @@ def test_all_images_requires_authentication(client):
 @pytest.mark.django_db
 def test_all_images_returns_empty(client):
     headers = {
-        "HTTP_AUTHORIZATION": f"Bearer {API_TOKEN}"
+        'HTTP_AUTHORIZATION': f'Bearer {API_TOKEN}'
     }
     response = client.get('/api/analyze-image', **headers, follow=True)
     

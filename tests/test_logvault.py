@@ -1,10 +1,10 @@
 import pytest
+
 from main.settings import API_TOKEN
 
+
 def basic_log_test(client, query):
-    headers = {
-        "HTTP_AUTHORIZATION": f"Bearer {API_TOKEN}"
-    }
+    headers = {'HTTP_AUTHORIZATION': f'Bearer {API_TOKEN}'}
     response = client.get(f'/api/logvault?{query}', **headers, follow=True)
 
     assert response.status_code in [200, 404]
@@ -17,11 +17,7 @@ def basic_log_test(client, query):
 
 @pytest.mark.django_db
 def test_logs_filter_timestamp(client):
-    queries = [
-        'timestamp=2024-01-01',
-        'timestamp=2025-04-11',
-        'timestamp=2030-01-01'
-    ]
+    queries = ['timestamp=2024-01-01', 'timestamp=2025-04-11', 'timestamp=2030-01-01']
     for query in queries:
         basic_log_test(client, query)
 
@@ -49,7 +45,6 @@ def test_logs_filter_message_and_function_contains(client):
     ]
     for query in queries:
         basic_log_test(client, query)
-
 
 
 @pytest.mark.django_db
@@ -86,8 +81,6 @@ def test_logs_with_invalid_filters(client):
         'exception_type=12345',
     ]
     for query in queries:
-        headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {API_TOKEN}"
-        }
+        headers = {'HTTP_AUTHORIZATION': f'Bearer {API_TOKEN}'}
         response = client.get(f'/api/logvault{query}', **headers, follow=True)
         assert response.status_code in [422, 404]
