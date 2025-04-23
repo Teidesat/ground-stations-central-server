@@ -7,25 +7,27 @@ from datetime import datetime, timedelta, timezone
 import requests
 from PIL import Image, ImageDraw
 
-# Configuración global
 API_TOKEN = 'holis123'
-NUM_IMAGENES = 10
-NUM_DATOS_SATELLITE = 15
+NUM_IMAGENES = 60
+NUM_DATOS_SATELLITE = 60
 TEST_MEDIA_DIR = 'test-media-img'
 MEDIA_DIR = './media'
-CATEGORIAS = ['TEMP', 'POWR', 'HUMI', 'POSI', 'GENE']
+EXAMPLES_DIR = 'examples'
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}  # Modificado
+CATEGORIAS = ['TEMP', 'POWR', 'HUMI', 'POSI']
 URL_SERVIDOR = 'http://127.0.0.1:8000/api/'
 
 
 def configurar_entorno():
     """Configura los directorios necesarios y limpia los existentes"""
-    for directorio in [TEST_MEDIA_DIR, MEDIA_DIR]:
+    for directorio in [TEST_MEDIA_DIR, MEDIA_DIR, EXAMPLES_DIR]:
         try:
             os.makedirs(directorio, exist_ok=True)
-            for archivo in os.listdir(directorio):
-                ruta = os.path.join(directorio, archivo)
-                if os.path.isfile(ruta):
-                    os.unlink(ruta)
+            if directorio != EXAMPLES_DIR:
+                for archivo in os.listdir(directorio):
+                    ruta = os.path.join(directorio, archivo)
+                    if os.path.isfile(ruta):
+                        os.unlink(ruta)
         except OSError as error:
             print(f'Error configurando {directorio}: {error}')
             raise
@@ -48,7 +50,6 @@ def crear_imagen(numero: int, ancho=300, alto=300):
         dibujo.text((10, 10), f'Img {numero}', fill=(255, 255, 255))
 
         for _ in range(random.randint(5, 15)):
-            # Generar coordenadas ordenadas
             x1, x2 = sorted([random.randint(0, ancho), random.randint(0, ancho)])
             y1, y2 = sorted([random.randint(0, alto), random.randint(0, alto)])
             color = tuple(random.randint(0, 255) for _ in range(3))
@@ -62,7 +63,7 @@ def crear_imagen(numero: int, ancho=300, alto=300):
                 dibujo.line([x1, y1, x2, y2], fill=color, width=2)
 
         img.save(os.path.join(TEST_MEDIA_DIR, f'test_image_{numero}.png'), optimize=True)
-        print(f'Imagen {numero} generada')
+        print(f'Imagen {numero + 1} generada')
     except Exception as error:
         print(f'Error generando imagen: {error}')
 
@@ -79,33 +80,26 @@ def generar_archivo_binario():
 
 
 def generar_dato_satelital(id_dato: int, timestamp_base: datetime):
-    """Genera datos de telemetría simulados"""
+    """Genera datos de telemetría simulados con unidades específicas"""
     try:
         categoria = random.choice(CATEGORIAS)
-        contenido = {
-            'value': round(
-                random.uniform(
-                    *{
-                        'TEMP': (0, 50),
-                        'POWR': (0, 100),
-                        'HUMI': (0, 100),
-                        'POSI': (-180, 180),
-                        'GENE': (0, 1000),
-                    }[categoria]
-                ),
-                2,
-            )
-        }
+        contenido = {}
 
-        if categoria == 'TEMP':
-            contenido['unit'] = '°C'
-        elif categoria == 'POSI':
-            contenido.update(
-                {
+        match categoria:
+            case 'TEMP':
+                contenido = {'value': round(random.uniform(0, 50), 2), 'unit': '°C'}
+
+            case 'HUMI' | 'POWR':  # Mismo manejo para ambas categorías
+                contenido = {
+                    'value': round(random.uniform(0, 100)),
+                    'unit': '%',
+                }
+
+            case 'POSI':
+                contenido = {
                     'latitude': round(random.uniform(-90, 90), 6),
                     'longitude': round(random.uniform(-180, 180), 6),
                 }
-            )
 
         dato = {
             'category': categoria,
@@ -118,18 +112,47 @@ def generar_dato_satelital(id_dato: int, timestamp_base: datetime):
         ruta = os.path.join(MEDIA_DIR, f'satellite_data_{id_dato}.bin')
         with open(ruta, 'wb') as archivo:
             archivo.write(json.dumps(dato).encode('utf-8'))
-        print(f'Dato satelital {id_dato} generado')
+        print(f'Dato satelital {id_dato + 1} generado')
     except Exception as error:
         print(f'Error generando dato satelital: {error}')
 
 
+def agregar_imagenes_examples(archivos, handles):
+    """Agrega imágenes desde el directorio examples a la lista de archivos"""
+    if not os.path.isdir(EXAMPLES_DIR):
+        print(f'Directorio {EXAMPLES_DIR} no encontrado, omitiendo imágenes de ejemplo')
+        return
+
+    print('\nAgregando imágenes desde examples:')
+    for filename in os.listdir(EXAMPLES_DIR):
+        file_ext = os.path.splitext(filename)[1].lower()
+        if file_ext in IMAGE_EXTENSIONS:
+            ruta = os.path.join(EXAMPLES_DIR, filename)
+            try:
+                handle = open(ruta, 'rb')
+                handles.append(handle)
+
+                # Determinar MIME type
+                if file_ext == '.webp':
+                    mime_type = 'image/webp'
+                elif file_ext in ('.jpg', '.jpeg'):
+                    mime_type = 'image/jpeg'
+                else:
+                    mime_type = 'image/png'
+
+                archivos.append(('files', (filename, handle, mime_type)))
+                print(f'✅ {filename} (tipo: {mime_type})')
+            except Exception as e:
+                print(f'❌ Error cargando {filename}: {str(e)}')
+
+
 def subir_archivos():
-    """Envía archivos al servidor con gestión segura de recursos"""
+    """Envía archivos al servidor incluyendo imágenes de examples"""
     archivos = []
     handles = []
 
     try:
-        # Cargar imágenes
+        # Imágenes generadas en TEST_MEDIA_DIR
         for i in range(NUM_IMAGENES):
             ruta = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
             if os.path.exists(ruta):
@@ -137,14 +160,17 @@ def subir_archivos():
                 handles.append(handle)
                 archivos.append(('files', (f'imagen_{i}.png', handle, 'image/png')))
 
-        # Cargar binario principal
+        # Agregar imágenes de examples
+        agregar_imagenes_examples(archivos, handles)
+
+        # Archivo binario principal
         ruta_binario = os.path.join(MEDIA_DIR, 'test_data.bin')
         if os.path.exists(ruta_binario):
             handle = open(ruta_binario, 'rb')
             handles.append(handle)
             archivos.append(('files', ('datos.bin', handle, 'application/octet-stream')))
 
-        # Cargar datos satelitales
+        # Datos satelitales
         for i in range(NUM_DATOS_SATELLITE):
             ruta = os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin')
             if os.path.exists(ruta):
@@ -183,19 +209,15 @@ if __name__ == '__main__':
     try:
         configurar_entorno()
 
-        # Generación de imágenes
         for i in range(NUM_IMAGENES):
             crear_imagen(i)
 
-        # Generar archivo binario
         generar_archivo_binario()
 
-        # Generar datos satelitales
         timestamp_base = datetime.now(timezone.utc)
         for i in range(NUM_DATOS_SATELLITE):
             generar_dato_satelital(i, timestamp_base)
 
-        # Subir archivos
         subir_archivos()
 
     except KeyboardInterrupt:
