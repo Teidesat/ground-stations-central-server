@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_celery_results',
-    'apps.analyze_image.apps.Analyze_ImageConfig',
+    'apps.analyze_image',
     'apps.dataflow.apps.DataflowConfig',
     'apps.logvault.apps.LogvaultConfig',
 ]
@@ -145,6 +145,3 @@ API_TOKEN = "holis123"
 
 # MAX NUMBER FILES
 DATA_UPLOAD_MAX_NUMBER_FILES = 1200
-
-#URLS SETTINGS
-APPEND_SLASH = True
