@@ -86,7 +86,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'my-postgres-container',
-        'PORT': 5432
+        'PORT': 5432,
     }
 }
 
@@ -112,7 +112,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:20001",  # tu frontend
+    'http://localhost:20001',  # tu frontend
 ]
 
 
@@ -140,19 +140,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery conf
 
-CELERY_BROKER_URL = "redis://redis:6379/0"  # Usando Redis como broker
+CELERY_BROKER_URL = 'redis://redis:6379/0'  # Usando Redis como broker
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_RESULT_EXTENDED = True
 
 # Token
-API_TOKEN = "holis123"
+API_TOKEN = 'holis123'
 
 
 # MAX NUMBER FILES
 DATA_UPLOAD_MAX_NUMBER_FILES = 1200
 
-#URLS SETTINGS
+# URLS SETTINGS
 APPEND_SLASH = True

@@ -8,12 +8,12 @@ import requests
 from PIL import Image, ImageDraw
 
 API_TOKEN = 'holis123'
-NUM_IMAGENES = 60
-NUM_DATOS_SATELLITE = 60
+NUM_IMAGENES = 10
+NUM_DATOS_SATELLITE = 10
 TEST_MEDIA_DIR = 'test-media-img'
 MEDIA_DIR = './media'
 EXAMPLES_DIR = 'examples'
-IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}  # Modificado
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}
 CATEGORIAS = ['TEMP', 'POWR', 'HUMI', 'POSI']
 URL_SERVIDOR = 'http://127.0.0.1:8000/api/'
 
@@ -89,7 +89,7 @@ def generar_dato_satelital(id_dato: int, timestamp_base: datetime):
             case 'TEMP':
                 contenido = {'value': round(random.uniform(0, 50), 2), 'unit': '°C'}
 
-            case 'HUMI' | 'POWR':  # Mismo manejo para ambas categorías
+            case 'HUMI' | 'POWR':
                 contenido = {
                     'value': round(random.uniform(0, 100)),
                     'unit': '%',
@@ -132,7 +132,6 @@ def agregar_imagenes_examples(archivos, handles):
                 handle = open(ruta, 'rb')
                 handles.append(handle)
 
-                # Determinar MIME type
                 if file_ext == '.webp':
                     mime_type = 'image/webp'
                 elif file_ext in ('.jpg', '.jpeg'):
@@ -152,7 +151,6 @@ def subir_archivos():
     handles = []
 
     try:
-        # Imágenes generadas en TEST_MEDIA_DIR
         for i in range(NUM_IMAGENES):
             ruta = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
             if os.path.exists(ruta):
@@ -160,17 +158,14 @@ def subir_archivos():
                 handles.append(handle)
                 archivos.append(('files', (f'imagen_{i}.png', handle, 'image/png')))
 
-        # Agregar imágenes de examples
         agregar_imagenes_examples(archivos, handles)
 
-        # Archivo binario principal
         ruta_binario = os.path.join(MEDIA_DIR, 'test_data.bin')
         if os.path.exists(ruta_binario):
             handle = open(ruta_binario, 'rb')
             handles.append(handle)
             archivos.append(('files', ('datos.bin', handle, 'application/octet-stream')))
 
-        # Datos satelitales
         for i in range(NUM_DATOS_SATELLITE):
             ruta = os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin')
             if os.path.exists(ruta):
