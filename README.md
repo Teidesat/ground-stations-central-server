@@ -65,6 +65,10 @@ docker-compose up -d
    <br>
    <a href="http://localhost:8000/api/docs"> Click here to check endpoints</a>
 
+## Testing
+
+For detailed instructions on running tests, see the [Testing Guide](/tests/test.md)
+
 ## License
 
 This project is licensed under GPL-3.0.
