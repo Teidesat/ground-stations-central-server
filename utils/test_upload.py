@@ -4,7 +4,6 @@ import random
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 
-import piexif  # Nueva dependencia
 import requests
 from PIL import Image, ImageDraw
 
@@ -42,7 +41,7 @@ def generar_textura_aleatoria(ancho: int, alto: int) -> list:
 
 
 def crear_imagen(numero: int, ancho=300, alto=300):
-    """Crea una imagen con EXIF y headers simulados"""
+    """Crea una imagen con validación de coordenadas"""
     try:
         img = Image.new('RGB', (ancho, alto))
         img.putdata(generar_textura_aleatoria(ancho, alto))
@@ -63,56 +62,8 @@ def crear_imagen(numero: int, ancho=300, alto=300):
             else:
                 dibujo.line([x1, y1, x2, y2], fill=color, width=2)
 
-        # Generar datos EXIF simulados
-        exif_dict = {
-            '0th': {
-                piexif.ImageIFD.Make: 'TestCam'.encode('utf-8'),
-                piexif.ImageIFD.Model: f'Model-{numero}'.encode('utf-8'),
-                piexif.ImageIFD.DateTime: datetime.now()
-                .strftime('%Y:%m:%d %H:%M:%S')
-                .encode('utf-8'),
-            },
-            'Exif': {
-                piexif.ExifIFD.ExposureTime: (random.randint(1, 100), random.randint(1, 100)),
-                piexif.ExifIFD.FNumber: (random.randint(1, 22), 10),
-                piexif.ExifIFD.ISOSpeedRatings: random.randint(100, 6400),
-            },
-            'GPS': {
-                piexif.GPSIFD.GPSLatitudeRef: random.choice(['N', 'S']).encode('utf-8'),
-                piexif.GPSIFD.GPSLatitude: [
-                    (random.randint(0, 90), 1),
-                    (random.randint(0, 59), 1),
-                    (random.randint(0, 59), 1),
-                ],
-                piexif.GPSIFD.GPSLongitudeRef: random.choice(['E', 'W']).encode('utf-8'),
-                piexif.GPSIFD.GPSLongitude: [
-                    (random.randint(0, 180), 1),
-                    (random.randint(0, 59), 1),
-                    (random.randint(0, 59), 1),
-                ],
-            },
-        }
-
-        exif_bytes = piexif.dump(exif_dict)
-
-        # Generar header personalizado
-        header_data = {
-            'generated_by': 'TestScript',
-            'image_number': numero,
-            'timestamp': datetime.now().isoformat(),
-            'texture_hash': hash(tuple(img.getdata())),
-        }
-
-        # Guardar imagen como JPEG con EXIF
-        img_path = os.path.join(TEST_MEDIA_DIR, f'test_image_{numero}.jpg')
-        img.save(img_path, 'JPEG', exif=exif_bytes, quality=95)
-
-        # Guardar header como archivo adjunto
-        header_path = os.path.join(TEST_MEDIA_DIR, f'header_{numero}.json')
-        with open(header_path, 'w') as f:
-            json.dump(header_data, f)
-
-        print(f'Imagen {numero + 1} generada con EXIF y header')
+        img.save(os.path.join(TEST_MEDIA_DIR, f'test_image_{numero}.png'), optimize=True)
+        print(f'Imagen {numero + 1} generada')
     except Exception as error:
         print(f'Error generando imagen: {error}')
 
@@ -200,34 +151,21 @@ def subir_archivos():
     handles = []
 
     try:
-        # Subir imágenes con sus headers
         for i in range(NUM_IMAGENES):
-            # Imagen principal
-            img_path = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.jpg')
-            if os.path.exists(img_path):
-                with open(img_path, 'rb') as img_handle:
-                    handles.append(img_handle)
-                    archivos.append(('files', (f'imagen_{i}.jpg', img_handle, 'image/jpeg')))
-
-                # Header asociado
-                header_path = os.path.join(TEST_MEDIA_DIR, f'header_{i}.json')
-                if os.path.exists(header_path):
-                    with open(header_path, 'rb') as header_handle:
-                        handles.append(header_handle)
-                        archivos.append(
-                            ('files', (f'header_{i}.json', header_handle, 'application/json'))
-                        )
+            ruta = os.path.join(TEST_MEDIA_DIR, f'test_image_{i}.png')
+            if os.path.exists(ruta):
+                handle = open(ruta, 'rb')
+                handles.append(handle)
+                archivos.append(('files', (f'imagen_{i}.png', handle, 'image/png')))
 
         agregar_imagenes_examples(archivos, handles)
 
-        # Archivo binario principal
         ruta_binario = os.path.join(MEDIA_DIR, 'test_data.bin')
         if os.path.exists(ruta_binario):
             handle = open(ruta_binario, 'rb')
             handles.append(handle)
             archivos.append(('files', ('datos.bin', handle, 'application/octet-stream')))
 
-        # Datos satelitales
         for i in range(NUM_DATOS_SATELLITE):
             ruta = os.path.join(MEDIA_DIR, f'satellite_data_{i}.bin')
             if os.path.exists(ruta):
