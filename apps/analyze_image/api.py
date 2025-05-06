@@ -8,7 +8,7 @@ from utils.helpers import create_log
 
 from .models import Imagen
 from .schemas import ImageFilterSchema
-from .serializer import ImageSerializer
+from .serializer import ImageDetailSerializer, ImageSerializer
 
 router = Router()
 
@@ -44,7 +44,7 @@ async def all_images(request, filters: ImageFilterSchema = Query(...)):
             request=request,
             exception=e,
         )
-        return JsonResponse({'Error': 'No images available'}, status=404)
+        return JsonResponse({'Message': 'No images available'})
 
 
 @router.get('/by-date/')
@@ -79,6 +79,48 @@ async def images_by_date(request, date: str):
             module='analyze_image.api',
             function='images_by_date',
             message=f'ERROR retrieving images by date: {e}',
+            request=request,
+            exception=e,
+        )
+        return JsonResponse({'Error': 'Internal server error'}, status=500)
+
+
+@router.get('/{image_id}')
+async def image_detail(request, image_id: int):
+    try:
+        image = await sync_to_async(Imagen.objects.get)(id=image_id)
+
+        image_json = ImageDetailSerializer(image, request=request)
+
+        await create_log(
+            level='INFO',
+            logger='ground-stations-central-server',
+            module='analyze_image.api',
+            function='image_detail',
+            message=f'Imagen {image_id} obtenida',
+            request=request,
+        )
+
+        return await sync_to_async(image_json.json_response)()
+
+    except Imagen.DoesNotExist:
+        await create_log(
+            level='ERROR',
+            logger='ground-stations-central-server',
+            module='analyze_image.api',
+            function='image_detail',
+            message=f'Imagen {image_id} no encontrada',
+            request=request,
+        )
+        return JsonResponse({'Error': 'Image not found'}, status=404)
+
+    except Exception as e:
+        await create_log(
+            level='ERROR',
+            logger='ground-stations-central-server',
+            module='analyze_image.api',
+            function='image_detail',
+            message=f'ERROR obteniendo imagen: {e}',
             request=request,
             exception=e,
         )
