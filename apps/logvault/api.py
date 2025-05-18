@@ -5,18 +5,21 @@ from django.http import JsonResponse
 from .schemas import LogFilterSchema
 router = Router()
 
-
 @router.get('/')
-def all_logs(request, filters:LogFilterSchema = Query(...)):
+def get_all_logs(request, filters:LogFilterSchema = Query(...)):
+    try:
+        logs = LogEntry.objects.all()
+        logs_serializer = LogSerializer(logs, request=request)
+        return logs_serializer.json_response()
+    except:
+        return JsonResponse({'error': 'Error while retrieving logs'}, status=500)
+
+@router.get('/filter')
+def get_filtered_logs(request, filters:LogFilterSchema = Query(...)):
     try:
         logs = LogEntry.objects.all()
         logs = filters.filter(logs)
-        if logs.exists():
-            logs_json = LogSerializer(logs, request=request)
-        else:
-            return JsonResponse({'error': 'No logs available'}, status=404)
-        return logs_json.json_response()
-    except LogEntry.DoesNotExist:
-        return JsonResponse({'error': 'No logs available'}, status=404)
+        logs_serializer = LogSerializer(logs, request=request)
+        return logs_serializer.json_response()
     except:
         return JsonResponse({'error': 'Error interno'}, status=500)
