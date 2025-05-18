@@ -69,6 +69,10 @@ docker-compose up -d
 
 For detailed instructions on running tests, see the [Testing Guide](/tests/test.md)
 
+## Documentación extensa
+<a href="https://deepwiki.com/Teidesat/ground-stations-central-server/1-overview"> Aquí la documentación en inglés</a>
+
+
 ## License
 
 This project is licensed under GPL-3.0.
