@@ -2,7 +2,7 @@ from ninja import NinjaAPI, UploadedFile
 from main.auth import SimpleTokenAuth
 from utils.classifier import Classifier
 from utils.buffer import StackBuffer
-from utils.helpers import create_log
+from apps.logvault.services import create_log
 from main.tasks import run_control_while
 
 

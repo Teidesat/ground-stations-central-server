@@ -4,7 +4,7 @@ from asgiref.sync import sync_to_async
 from django.http import JsonResponse
 from ninja import Query, Router
 
-from utils.helpers import create_log
+from apps.logvault.services import create_log
 
 from .models import Imagen
 from .schemas import ImageFilterSchema

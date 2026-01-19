@@ -1,7 +1,7 @@
 import asyncio
 import json
 from asgiref.sync import sync_to_async
-from utils.helpers import create_log
+from apps.logvault.services import create_log
 
 
 FIELDS= ['category', 'content', 'timestamp']

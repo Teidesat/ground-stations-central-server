@@ -1,5 +1,5 @@
 import asyncio
-from utils.helpers import create_log
+from apps.logvault.services import create_log
 
 
 async def control_while(buffer, classifier):

@@ -1,9 +1,9 @@
 from apps.analyze_image.task import run_tasks
 from apps.dataflow.tasks import run_data_tasks
 from apps.analyze_image.models import Imagen
-from apps.dataflow.models import SatelliteData
+# from apps.dataflow.models import SatelliteData
 from .buffer import StackBuffer
-from .helpers import create_log
+from apps.logvault.services import create_log
 
 
 import asyncio
@@ -28,8 +28,8 @@ class Classifier():
 
             elif type_data_cleaned == 'application' and data_format == 'octet-stream':
                 print('he pasado por los datos')
-                data_raw = await SatelliteData.objects.acreate(raw_data=data)
-                self.datos.add(data_raw)
+                # data_raw = await SatelliteData.objects.acreate(raw_data=data)
+                # self.datos.add(data_raw)
                 data_obj =  self.datos.get()
                 
                 await asyncio.create_task(run_data_tasks(data_obj))

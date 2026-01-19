@@ -3,7 +3,7 @@ from PIL import Image
 import asyncio
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from asgiref.sync import sync_to_async
-from utils.helpers import create_log
+from apps.logvault.services import create_log
 
 async def image_proccesing(img:object):
     try:

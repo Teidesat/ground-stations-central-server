@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'apps.analyze_image.apps.Analyze_ImageConfig',
     'apps.dataflow.apps.DataflowConfig',
     'apps.logvault.apps.LogvaultConfig',
+    'apps.core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
@@ -156,3 +157,8 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 1200
 
 # URLS SETTINGS
 APPEND_SLASH = True
+
+# SERVICES URLS
+RGS_URL = 'http://localhost:20002'  # Replace with actual RGS service URL
+OGS_URL = 'http://localhost:20003'  # Replace with actual OGS service URL
+FOMALHAUT_URL = 'http://localhost:20004'  # Replace with actual Fomalhaut service URL
