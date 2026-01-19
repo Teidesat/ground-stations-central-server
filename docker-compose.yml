@@ -15,7 +15,7 @@ services:
       - redis
   
   postgres:
-    image: postgres
+    image: postgres:17-alpine
     container_name: my-postgres-container
     ports:
       - "5432:5432"
