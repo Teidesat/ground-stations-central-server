@@ -1,525 +1,387 @@
 from ninja import Router, Query
 from django.http import JsonResponse
-# from asgiref.sync import sync_to_async
-from typing import List
-import httpx
 
-from apps.core.models import GeneralData, SatelliteData, RadioStationData, OpticalStationData, FomalhautData
-from .schemas import DataFilterSchema, LiveDataFilter
-from .services import send_data, store_satellite_data, store_radio_station_data, store_optical_station_data, store_fomalhaut_data
+from apps.core.models import TelemetryMessage, CommandMessage, EventMessage, StatusMessage 
+from .schemas import *
+from .services import send_data, get_data, store_command_data, store_event_data, store_status_data, store_telemetry_data
 
 from apps.logvault.services import create_log
 from main.settings import RGS_URL, OGS_URL, FOMALHAUT_URL
 
 router = Router()
 
+# RUTAS HISTORICAS (BD)
 
-# Ruta de datos para el satélite
-# GET (Información en tiempo real)
-@router.get('/satellite/live')
-async def live_satellite_data(request, filters: LiveDataFilter = Query(...)):
+# Rutas para telemetría historica
+# GET
+@router.get('/historical/telemetry', response=list[TelemetryMessageSchema])
+async def get_telemetry_data(request, filters: TelemetryFilterSchema = Query(...)):
+    qs = TelemetryMessage.objects.all()
+    qs = filters.filter(qs)
+    exists = await qs.aexists()
 
-    rgs_url = f"{RGS_URL}/satellite/live"
+    if not exists:
+        await create_log(
+            level= 'WARNING',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_telemetry_data',
+            message= f'No hay datos de telemetría disponibles que coincidan con los filtros proporcionados',
+            request=request
+        )
+        return JsonResponse({'error': 'No telemetry data found with the provided filters'}, status=404)
 
+    await create_log(
+        level= 'INFO',
+        logger='ground-stations-central-server',
+        module='dataflow.api',
+        function='get_telemetry_data',
+        message= f'Petición de datos de telemetría realizada',
+        request=request
+    )
+
+    results = [item async for item in qs]
+
+    return results
+
+# Ruta obtención de eventos historicos
+# GET
+@router.get('/historical/events', response=list[EventMessageSchema])
+async def get_event_data(request, filters: EventFilterSchema = Query(...)):
+    qs = EventMessage.objects.all()
+    qs = filters.filter(qs)
+    exists = await qs.aexists()
+
+    if not exists:
+        await create_log(
+            level= 'WARNING',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_event_data',
+            message= f'No hay datos de eventos disponibles que coincidan con los filtros proporcionados',
+            request=request
+        )
+        return JsonResponse({'error': 'No event data found with the provided filters'}, status=404)
+
+    await create_log(
+        level= 'INFO',
+        logger='ground-stations-central-server',
+        module='dataflow.api',
+        function='get_event_data',
+        message= f'Petición de datos de eventos realizada',
+        request=request
+    )
+
+    results = [item async for item in qs]
+
+    return results
+
+
+# Ruta para obtener status historico
+# GET
+@router.get('/historical/status', response=list[StatusMessageSchema])
+async def get_status_data(request, filters: StatusFilterSchema = Query(...)):
+    qs = StatusMessage.objects.all()
+    qs = filters.filter(qs)
+    exists = await qs.aexists()
+
+    if not exists:
+        await create_log(
+            level= 'WARNING',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_status_data',
+            message= f'No hay datos de estado del sistema disponibles que coincidan con los filtros proporcionados',
+            request=request
+        )
+        return JsonResponse({'error': 'No status data found with the provided filters'}, status=404)
+    
+    await create_log(
+        level= 'INFO',
+        logger='ground-stations-central-server',
+        module='dataflow.api',
+        function='get_status_data',
+        message= f'Petición de datos de estado del sistema realizada',
+        request=request
+    )
+
+    results = [item async for item in qs]
+    
+    return results
+
+# Ruta para otener comandos historicos
+# GET
+@router.get('/historical/commands', response=list[CommandMessageSchema])
+async def get_command_data(request, filters: CommandFilterSchema = Query(...)):
+    qs = CommandMessage.objects.all()
+    qs = filters.filter(qs)
+    exists = await qs.aexists()
+
+    if not exists:
+        await create_log(
+            level= 'WARNING',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_command_data',
+            message= f'No hay datos de comandos disponibles',
+            request=request
+        )
+        return JsonResponse({'error': 'No command data found with the provided filters'}, status=404)
+
+    await create_log(
+        level= 'INFO',
+        logger='ground-stations-central-server',
+        module='dataflow.api',
+        function='get_command_data',
+        message= f'Petición de datos de comandos realizada',
+        request=request
+    )
+
+    results = [item async for item in qs]
+
+    return results
+
+# RUTAS TIEMPO REAL
+
+# Ruta para envio de comandos
+# POST
+@router.post('/stream/commands')
+async def send_command_data(request, data: CommandMessageSchema):
     try:
-        async with httpx.AsyncClient() as client: # Possible addition of timeout
-            response = await client.get(rgs_url, params=filters.dict())
-            if response.status_code != 200:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_satellite_data',
-                    message= f'ERROR al obtener datos en tiempo real del satélite: {response.status_code}',
-                    request=request,
-                )
-                return JsonResponse({'error': 'Failed to fetch live data from satellite'}, status=502)
-            data = response.json()
-            try:
-                await store_satellite_data(data)
-            except Exception as e:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_satellite_data',
-                    message= f'ERROR al almacenar dato del satélite: {e}',
-                    request=request,
-                    exception=e,
-                )
-                
-            await create_log(
-                level= 'INFO',
-                logger='ground-stations-central-server',
-                module='dataflow.api',
-                function='live_satellite_data',
-                message= f'Datos en tiempo real del satélite obtenidos correctamente.',
-                request=request
-            )
+        await create_log(
+            level= 'INFO',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='send_command_data',
+            message= f'Enviando comando',
+            request=request
+        )
 
-            return JsonResponse(data, status=200)
-    except httpx.RequestError as e:
+        url = ""
+
+        if data.destination == "satellite":
+            url = RGS_URL + '/commands'
+        elif data.destination == "radio_station":
+            url = RGS_URL + '/commands'
+        elif data.destination == "optical_station":
+            url = OGS_URL + '/commands'
+        elif data.destination == "fomalhaut":
+            url = FOMALHAUT_URL + '/commands'
+        else:
+            return JsonResponse({'error': 'Invalid command destination'}, status=400)
+
+        response: CommandMessageSchema = await send_data(
+            url, 
+            data.dict()
+        )
+
+        await create_log(
+            level= 'INFO',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='send_command_data',
+            message= f'Comando enviado correctamente',
+            request=request
+        )
+
+        await store_command_data(data)
+
+        await store_command_data(response)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': response
+        },  status=200)
+
+    except Exception as e:
         await create_log(
             level= 'ERROR',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='live_satellite_data',
-            message= f'ERROR en la solicitud de datos en tiempo real del satélite: {e}',
+            function='send_command_data',
+            message= f'ERROR en la solicitud de envío de comando: {e}',
             request=request,
             exception=e,
         )
-        return JsonResponse({'error': 'Failed to fetch live data from satellite'}, status=502)
+        return JsonResponse({'error': 'Failed to send command'}, status=502)
+    
+
+# Ruta para obtención telemetria en tiempo real
+@router.get('/stream/telemetry')
+async def get_live_telemetry(request, params: TelemetryRequestSchema = Query(...)):
+    try:
+        await create_log(
+            level= 'INFO',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_live_telemetry',
+            message= f'Obteniendo datos de telemetría en tiempo real',
+            request=request
+        )
+        
+        url = ""
+
+        if params.destination == "satellite":
+            url = RGS_URL + '/telemetry'
+        elif params.destination == "radio_station":
+            url = RGS_URL + '/telemetry'
+        elif params.destination == "optical_station":
+            url = OGS_URL + '/telemetry'
+        elif params.destination == "fomalhaut":
+            url = FOMALHAUT_URL + '/telemetry'
+        else:
+            return JsonResponse({'error': 'Invalid command destination'}, status=400)
+        
+        response: TelemetryMessageSchema = await get_data(
+            url,
+            params.dict()
+        )
+
+        create_log(
+            level= 'INFO',
+            logger='ground-stations-central-server',
+            module='dataflow.api',
+            function='get_live_telemetry',
+            message= f'Datos de telemetría en tiempo real obtenidos correctamente',
+            request=request
+        )
+
+        await store_telemetry_data(response)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': response
+        },  status=200)
         
 
-# GET (Todos los datos BD)
-@router.get('/satellite/data', response=List[DataFilterSchema])
-async def all_satellite_data(request, filters: DataFilterSchema = Query(...)):
-    qs = SatelliteData.objects.all()
-    qs = filters.filter(qs)
-    exists = await qs.aexists()
-    
-    if not exists:
+    except Exception as e:
         await create_log(
-            level= 'WARNING',
+            level= 'ERROR',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='all_satellite_data',
-            message= f'No hay datos disponibles que coincidan con los filtros proporcionados',
-            request=request
+            function='get_live_telemetry',
+            message= f'ERROR al obtener datos de telemetría en tiempo real: {e}',
+            request=request,
+            exception=e,
         )
-        return JsonResponse({'error': 'No data available'}, status=404)
-    
-    await create_log(
-        level= 'INFO',
-        logger='ground-stations-central-server',
-        module='dataflow.api',
-        function='all_satellite_data',
-        message= f'Petición realizada',
-        request=request
-    )
+        return JsonResponse({'error': 'Failed to fetch live telemetry data'}, status=502)
 
-    results = [item async for item in qs]
-
-    return results
-
-#POST (Envio comandos al satélite)
-@router.post('/satellite/live')
-async def send_satellite_data(request, data: LiveDataFilter):
+# Ruta para obtención eventos en tiempo real
+@router.get('/stream/events')
+async def get_live_events(request, params: EventRequestSchema = Query(...)):
     try:
         await create_log(
             level= 'INFO',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_satellite_data',
-            message= f'Enviando comandos al satélite',
+            function='get_live_events',
+            message= f'Obteniendo datos de eventos en tiempo real',
             request=request
         )
 
-        response = await send_data(
-            RGS_URL + '/satellite/live', 
-            data.dict()
+        url = ""
+
+        if params.destination == "satellite":
+            url = RGS_URL + '/events'
+        elif params.destination == "radio_station":
+            url = RGS_URL + '/events'
+        elif params.destination == "optical_station":
+            url = OGS_URL + '/events'
+        elif params.destination == "fomalhaut":
+            url = FOMALHAUT_URL + '/events'
+        else:
+            return JsonResponse({'error': 'Invalid command destination'}, status=400)
+        
+        response: EventMessageSchema = await get_data(
+            url,
+            params.dict()
         )
 
         await create_log(
             level= 'INFO',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_satellite_data',
-            message= f'Comandos enviados al satélite correctamente',
+            function='get_live_events',
+            message= f'Datos de eventos en tiempo real obtenidos correctamente',
             request=request
         )
+
+        await store_event_data(response)
+        
         return JsonResponse({
             'status': 'success',
             'message': response
         },  status=200)
-
-    except httpx.RequestError as e:
+        
+    except Exception as e:
         await create_log(
             level= 'ERROR',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_satellite_data',
-            message= f'ERROR en la solicitud de envío de comandos al satélite: {e}',
+            function='get_live_events',
+            message= f'ERROR al obtener datos de eventos en tiempo real: {e}',
             request=request,
             exception=e,
         )
-        return JsonResponse({'error': 'Failed to send commands to satellite'}, status=502)
+        return JsonResponse({'error': 'Failed to fetch live event data'}, status=502)
 
 
-# Ruta de datos para la estación de radio
-# GET (Solicitar información de la estación de radio)
-@router.get('/radio-station/live')
-async def live_radio_station_data(request, filters: LiveDataFilter = Query(...)):
 
-    rgs_url = f"{RGS_URL}/radio-station/live"
-
-    try:
-        async with httpx.AsyncClient() as client: # Possible addition of timeout
-            response = await client.get(rgs_url, params=filters.dict())
-            if response.status_code != 200:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_radio_station_data',
-                    message= f'ERROR al obtener datos en tiempo real de la estación de radio: {response.status_code}',
-                    request=request,
-                )
-                return JsonResponse({'error': 'Failed to fetch live data from radio station'}, status=502)
-            
-            data = response.json()
-            try:
-                await store_radio_station_data(data)
-            except Exception as e:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_radio_station_data',
-                    message= f'ERROR al almacenar dato de la estación de radio: {e}',
-                    request=request,
-                    exception=e,
-                )
-            await create_log(
-                level= 'INFO',
-                logger='ground-stations-central-server',
-                module='dataflow.api',
-                function='live_radio_station_data',
-                message= f'Datos en tiempo real de la estación de radio obtenidos correctamente',
-                request=request
-            )
-            return JsonResponse(data, status=200)
-    except httpx.RequestError as e:
-        await create_log(
-            level= 'ERROR',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='live_radio_station_data',
-            message= f'ERROR en la solicitud de datos en tiempo real de la estación de radio: {e}',
-            request=request,
-            exception=e,
-        )
-        return JsonResponse({'error': 'Failed to fetch live data from radio station'}, status=502)
-
-# GET (Todos los datos BD)
-@router.get('/radio-station/data', response=List[DataFilterSchema])
-async def all_radio_station_data(request, filters: DataFilterSchema = Query(...)):
-    qs = RadioStationData.objects.all()
-    qs = filters.filter(qs)
-    exists = await qs.aexists()
-    
-    if not exists:
-        await create_log(
-            level= 'WARNING',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='all_radio_station_data',
-            message= f'No hay datos disponibles que coincidan con los filtros proporcionados',
-            request=request
-        )
-        return JsonResponse({'error': 'No data available'}, status=404)
-    
-    await create_log(
-        level= 'INFO',
-        logger='ground-stations-central-server',
-        module='dataflow.api',
-        function='all_radio_station_data',
-        message= f'Petición realizada',
-        request=request
-    )
-
-    results = [item async for item in qs]
-
-    return results
-    
-# POST (Envio datos de la estación de radio)
-@router.post('/radio-station/live')
-async def send_radio_station_data(request, data: LiveDataFilter): 
+# Ruta para obtener status en tiempo real
+@router.get('/stream/status')
+async def get_live_status(request, params: StatusRequestSchema = Query(...)):
     try:
         await create_log(
             level= 'INFO',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_radio_station_data',
-            message= f'Enviando datos a la estación de radio',
+            function='get_live_status',
+            message= f'Obteniendo datos de estado del sistema en tiempo real',
             request=request
         )
 
-        response = await send_data(
-            RGS_URL + '/radio-station/live', 
-            data.dict()
+        url = ""
+
+        if params.destination == "satellite":
+            url = RGS_URL + '/status'
+        elif params.destination == "radio_station":
+            url = RGS_URL + '/status'
+        elif params.destination == "optical_station":
+            url = OGS_URL + '/status'
+        elif params.destination == "fomalhaut":
+            url = FOMALHAUT_URL + '/status'
+        else:
+            return JsonResponse({'error': 'Invalid command destination'}, status=400)
+        
+        response: StatusMessageSchema = await get_data(
+            url,
+            params.dict()
         )
 
         await create_log(
             level= 'INFO',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_radio_station_data',
-            message= f'Datos enviados a la estación de radio correctamente',
+            function='get_live_status',
+            message= f'Datos de estado del sistema en tiempo real obtenidos correctamente',
             request=request
         )
+
+        await store_status_data(response)
+
         return JsonResponse({
             'status': 'success',
             'message': response
         },  status=200)
     
-    except httpx.RequestError as e:
+    except Exception as e:
         await create_log(
             level= 'ERROR',
             logger='ground-stations-central-server',
             module='dataflow.api',
-            function='send_radio_station_data',
-            message= f'ERROR en la solicitud de envío de datos a la estación de radio: {e}',
+            function='get_live_status',
+            message= f'ERROR al obtener datos de estado del sistema en tiempo real: {e}',
             request=request,
             exception=e,
         )
-        return JsonResponse({'error': 'Failed to send data to radio station'}, status=502)
-
-# Ruta de datos para la estación óptica
-# GET (Solicitar información de la estación óptica)
-@router.get('/optical-station/live')
-async def live_optical_station_data(request, filters: LiveDataFilter = Query(...)):
-    ogs_url = f"{OGS_URL}/optical-station/live"
-
-    try:
-        async with httpx.AsyncClient() as client: # Possible addition of timeout
-            response = await client.get(ogs_url, params=filters.dict())
-            if response.status_code != 200:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_optical_station_data',
-                    message= f'ERROR al obtener datos en tiempo real de la estación óptica: {response.status_code}',
-                    request=request,
-                )
-                return JsonResponse({'error': 'Failed to fetch live data from optical station'}, status=502)
-            data = response.json()
-            try:
-                await store_optical_station_data(data)
-            except Exception as e:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_optical_station_data',
-                    message= f'ERROR al almacenar dato de la estación óptica: {e}',
-                    request=request,
-                    exception=e,
-                )
-            await create_log(
-                level= 'INFO',
-                logger='ground-stations-central-server',
-                module='dataflow.api',
-                function='live_optical_station_data',
-                message= f'Datos en tiempo real de la estación óptica obtenidos correctamente',
-                request=request
-            )
-            return JsonResponse(data, status=200)
-    except httpx.RequestError as e:
-        await create_log(
-            level= 'ERROR',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='live_optical_station_data',
-            message= f'ERROR en la solicitud de datos en tiempo real de la estación óptica: {e}',
-            request=request,
-            exception=e,
-        )
-        return JsonResponse({'error': 'Failed to fetch live data from optical station'}, status=502)
-
-# GET (Todos los datos BD)
-@router.get('/optical-station/data', response=List[DataFilterSchema])
-async def all_optical_station_data(request, filters: DataFilterSchema = Query(...)):
-    qs = OpticalStationData.objects.all()
-    qs = filters.filter(qs)
-    exists = await qs.aexists()
-
-    if not exists:
-        await create_log(
-            level= 'WARNING',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='all_optical_station_data',
-            message= f'No hay datos disponibles que coincidan con los filtros proporcionados',
-            request=request
-        )
-        return JsonResponse({'error': 'No data available'}, status=404)
-    await create_log(
-        level= 'INFO',
-        logger='ground-stations-central-server',
-        module='dataflow.api',
-        function='all_optical_station_data',
-        message= f'Petición realizada',
-        request=request
-    )
-    results = [item async for item in qs]
-    return results
-
-# POST (Envio datos de la estación óptica)
-@router.post('/optical-station/live')
-async def send_optical_station_data(request, data: LiveDataFilter):
-    try:
-        await create_log(
-            level= 'INFO',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_optical_station_data',
-            message= f'Enviando datos a la estación óptica',
-            request=request
-        )
-
-        response = await send_data(
-            OGS_URL + '/optical-station/live', 
-            data.dict()
-        )
-
-        await create_log(
-            level= 'INFO',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_optical_station_data',
-            message= f'Datos enviados a la estación óptica correctamente',
-            request=request
-        )
-        return JsonResponse({
-            'status': 'success',
-            'message': response
-        },  status=200)
-    
-    except httpx.RequestError as e:
-        await create_log(
-            level= 'ERROR',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_optical_station_data',
-            message= f'ERROR en la solicitud de envío de datos a la estación óptica: {e}',
-            request=request,
-            exception=e,
-        )
-        return JsonResponse({'error': 'Failed to send data to optical station'}, status=502)
-    
-# Ruta de datos para Fomalhaut
-# GET (Solicitar información de Fomalhaut)
-@router.get('/fomalhaut/live')
-async def live_fomalhaut_data(request, filters: LiveDataFilter = Query(...)):
-    fom_url = f"{FOMALHAUT_URL}/fomalhaut/live"
-
-    try:
-        async with httpx.AsyncClient() as client: # Possible addition of timeout
-            response = await client.get(fom_url, params=filters.dict())
-            if response.status_code != 200:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_fomalhaut_data',
-                    message= f'ERROR al obtener datos en tiempo real de Fomalhaut: {response.status_code}',
-                    request=request,
-                )
-                return JsonResponse({'error': 'Failed to fetch live data from Fomalhaut'}, status=502)
-            data = response.json()
-            try:
-                await store_fomalhaut_data(data)
-            except Exception as e:
-                await create_log(
-                    level= 'ERROR',
-                    logger='ground-stations-central-server',
-                    module='dataflow.api',
-                    function='live_fomalhaut_data',
-                    message= f'ERROR al almacenar dato de Fomalhaut: {e}',
-                    request=request,
-                    exception=e,
-                )
-            await create_log(
-                level= 'INFO',
-                logger='ground-stations-central-server',
-                module='dataflow.api',
-                function='live_fomalhaut_data',
-                message= f'Datos en tiempo real de Fomalhaut obtenidos correctamente',
-                request=request
-            )
-            return JsonResponse(data, status=200)
-    except httpx.RequestError as e:
-        await create_log(
-            level= 'ERROR',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='live_fomalhaut_data',
-            message= f'ERROR en la solicitud de datos en tiempo real de Fomalhaut: {e}',
-            request=request,
-            exception=e,
-        )
-        return JsonResponse({'error': 'Failed to fetch live data from Fomalhaut'}, status=502)
-
-# GET (Todos los datos BD)
-@router.get('/fomalhaut/data', response=List[DataFilterSchema])
-async def all_fomalhaut_data(request, filters: DataFilterSchema = Query(...)):
-    qs = FomalhautData.objects.all()
-    qs = filters.filter(qs)
-    exists = await qs.aexists()
-
-    if not exists:
-        await create_log(
-            level= 'WARNING',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='all_fomalhaut_data',
-            message= f'No hay datos disponibles que coincidan con los filtros proporcionados',
-            request=request
-        )
-        return JsonResponse({'error': 'No data available'}, status=404)
-    await create_log(
-        level= 'INFO',
-        logger='ground-stations-central-server',
-        module='dataflow.api',
-        function='all_fomalhaut_data',
-        message= f'Petición realizada',
-        request=request
-    )
-    results = [item async for item in qs]
-    return results
-    
-    
-# POST (Envio datos de Fomalhaut)
-@router.post('/fomalhaut/live')
-async def send_fomalhaut_data(request, data: LiveDataFilter): #Implement schema
-    try:
-        await create_log(
-            level= 'INFO',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_fomalhaut_data',
-            message= f'Enviando datos a Fomalhaut',
-            request=request
-        )
-
-        response = await send_data(
-            FOMALHAUT_URL + '/fomalhaut/live', 
-            data.dict()
-        )
-
-        await create_log(
-            level= 'INFO',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_fomalhaut_data',
-            message= f'Datos enviados a Fomalhaut correctamente',
-            request=request
-        )
-        return JsonResponse({
-            'status': 'success',
-            'message': response
-        },  status=200)
-    
-    except httpx.RequestError as e:
-        await create_log(
-            level= 'ERROR',
-            logger='ground-stations-central-server',
-            module='dataflow.api',
-            function='send_fomalhaut_data',
-            message= f'ERROR en la solicitud de envío de datos a Fomalhaut: {e}',
-            request=request,
-            exception=e,
-        )
-        return JsonResponse({'error': 'Failed to send data to Fomalhaut'}, status=502)
+        return JsonResponse({'error': 'Failed to fetch live system status data'}, status=502)

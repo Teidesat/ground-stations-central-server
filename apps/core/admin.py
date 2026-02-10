@@ -1,56 +1,75 @@
 from django.contrib import admin
-from .models import GeneralData, SatelliteData, RadioStationData, OpticalStationData, FomalhautData
+from .models import TelemetryMessage, StatusMessage, CommandMessage, EventMessage, SoftwareUpdate
 
-@admin.register(GeneralData)
-class GeneralDataAdmin(admin.ModelAdmin):
+@admin.register(TelemetryMessage)
+class TelemetryMessageAdmin(admin.ModelAdmin):
     list_display = (
-        'data_type',
-        'data_source',
-        'data_destination',
-        'content',
-        'timestamp'
+        'id',
+        'message_type',
+        'source',
+        'destination',
+        'timestamp',
+        'raw_data',
+        'subsystem',
+        'module',
+        'value',
+        'unit',
+        'valid'
     )
 
-@admin.register(SatelliteData)
-class SatelliteDataAdmin(admin.ModelAdmin):
+@admin.register(StatusMessage)
+class StatusMessageAdmin(admin.ModelAdmin):
     list_display = (
-        'data_type',
-        'data_source',
-        'data_destination',
-        'category',
-        'content',
-        'timestamp'
+        'id',
+        'message_type',
+        'source',
+        'destination',
+        'timestamp',
+        'state',
+        'mode'
     )
 
-@admin.register(RadioStationData)
-class RadioStationDataAdmin(admin.ModelAdmin):
+@admin.register(CommandMessage)
+class CommandMessageAdmin(admin.ModelAdmin):
     list_display = (
-        'data_type',
-        'data_source',
-        'data_destination',
-        'category',
-        'content',
-        'timestamp'
+        'id',
+        'message_type',
+        'source',
+        'destination',
+        'timestamp',
+        'subsystem',
+        'parameters',
+        'status',
+        'execution_time',
+        'command_type'
     )
 
-@admin.register(OpticalStationData)
-class OpticalStationDataAdmin(admin.ModelAdmin):
+@admin.register(EventMessage)
+class EventMessageAdmin(admin.ModelAdmin):
     list_display = (
-        'data_type',
-        'data_source',
-        'data_destination',
-        'category',
-        'content',
-        'timestamp'
+        'id',
+        'message_type',
+        'source',
+        'destination',
+        'timestamp',
+        'subsystem',
+        'severity',
+        'code',
+        'description'
     )
 
-@admin.register(FomalhautData)
-class FomalhautDataAdmin(admin.ModelAdmin):
+@admin.register(SoftwareUpdate)
+class SoftwareUpdateAdmin(admin.ModelAdmin):
     list_display = (
-        'data_type',
-        'data_source',
-        'data_destination',
-        'category',
-        'content',
-        'timestamp'
+       'id',
+        'message_type',
+        'source',
+        'destination',
+        'timestamp',
+        'versión',
+        'checksum',
+        'size_bytes',
+        'verified',
+        'uploaded_at',
+        'data' 
     )
