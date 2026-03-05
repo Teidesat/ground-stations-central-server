@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -149,7 +150,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_RESULT_EXTENDED = True
 
 # Token
-API_TOKEN = 'holis123'
+API_TOKEN = os.getenv("API_TOKEN", "holis123")
 
 
 # MAX NUMBER FILES
@@ -159,6 +160,6 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 1200
 APPEND_SLASH = True
 
 # SERVICES URLS
-RGS_URL = 'http://localhost:20002'  # Replace with actual RGS service URL
-OGS_URL = 'http://localhost:20003'  # Replace with actual OGS service URL
-FOMALHAUT_URL = 'http://localhost:20004'  # Replace with actual Fomalhaut service URL
+RGS_URL = os.getenv("RGS_URL", "http://localhost:20002")
+OGS_URL = os.getenv("OGS_URL", "http://localhost:20003")
+FOMALHAUT_URL = os.getenv("FOMALHAUT_URL", "http://localhost:20004")

@@ -1,9 +1,7 @@
 import pytest
 from django.http import HttpResponsePermanentRedirect
 from django.conf import settings
-from django.core.validators import MaxValueValidator, MinValueValidator
 from apps.analyze_image.models import Imagen
-from apps.dataflow.models import SatelliteData
 from apps.logvault.models import LogEntry
 
 
@@ -30,14 +28,6 @@ def test_image_model_has_proper_fields():
         ), f'El campo <{field}> no está en el modelo Subject.'
 
 @pytest.mark.django_db
-def test_satellite_data_model_has_proper_fields():
-    PROPER_FIELDS = ('category', 'content', 'timestamp', 'raw_data')
-    for field in PROPER_FIELDS:
-        assert (
-            getattr(SatelliteData, field) is not None
-        ), f'El campo <{field}> no está en el modelo Subject.'
-
-@pytest.mark.django_db
 def test_logentry_model_has_proper_fields():
     PROPER_FIELDS = ('timestamp', 'level', 'logger', 'module', 'function', 'message', 'request_method', 'request_path', 'request_status_code', 'request_client_ip', 'request_user', 'exception_type', 'exception_message', 'exception_stack_trace', 'extra_data')
     for field in PROPER_FIELDS:
@@ -47,7 +37,7 @@ def test_logentry_model_has_proper_fields():
 
 @pytest.mark.django_db
 def test_models_are_available_on_admin(admin_client):
-    MODELS = ('analyze_image.imagen', 'dataflow.satellitedata', 'logvault.logentry')
+    MODELS = ('analyze_image.imagen', 'logvault.logentry')
 
     for model in MODELS:
         url_model_path = model.replace('.', '/').lower()
@@ -58,7 +48,6 @@ def test_models_are_available_on_admin(admin_client):
 
 AUTH_URLS_GET = [
     '/api/analyze-image',
-    '/api/dataflow/satellite-data',
     '/api/logvault',
 ]
 
