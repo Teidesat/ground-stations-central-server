@@ -6,7 +6,7 @@ from .schemas import *
 from .services import send_data, get_data, store_command_data, store_event_data, store_status_data, store_telemetry_data
 
 from apps.logvault.services import create_log
-from main.settings import RGS_URL, OGS_URL, FOMALHAUT_URL
+from django.conf import settings
 
 router = Router()
 
@@ -29,7 +29,7 @@ async def get_telemetry_data(request, filters: TelemetryFilterSchema = Query(...
             message= f'No hay datos de telemetría disponibles que coincidan con los filtros proporcionados',
             request=request
         )
-        return JsonResponse({'error': 'No telemetry data found with the provided filters'}, status=404)
+        return JsonResponse({'error': 'No data available'}, status=404)
 
     await create_log(
         level= 'INFO',
@@ -61,7 +61,7 @@ async def get_event_data(request, filters: EventFilterSchema = Query(...)):
             message= f'No hay datos de eventos disponibles que coincidan con los filtros proporcionados',
             request=request
         )
-        return JsonResponse({'error': 'No event data found with the provided filters'}, status=404)
+        return JsonResponse({'error': 'No data available'}, status=404)
 
     await create_log(
         level= 'INFO',
@@ -94,7 +94,7 @@ async def get_status_data(request, filters: StatusFilterSchema = Query(...)):
             message= f'No hay datos de estado del sistema disponibles que coincidan con los filtros proporcionados',
             request=request
         )
-        return JsonResponse({'error': 'No status data found with the provided filters'}, status=404)
+        return JsonResponse({'error': 'No data available'}, status=404)
     
     await create_log(
         level= 'INFO',
@@ -126,7 +126,7 @@ async def get_command_data(request, filters: CommandFilterSchema = Query(...)):
             message= f'No hay datos de comandos disponibles',
             request=request
         )
-        return JsonResponse({'error': 'No command data found with the provided filters'}, status=404)
+        return JsonResponse({'error': 'No data available'}, status=404)
 
     await create_log(
         level= 'INFO',
@@ -160,13 +160,13 @@ async def send_command_data(request, data: CommandMessageSchema):
         url = ""
 
         if data.destination == "satellite":
-            url = RGS_URL + '/commands'
+            url = f"{settings.RGS_URL}/commands"
         elif data.destination == "radio_station":
-            url = RGS_URL + '/commands'
+            url = f"{settings.RGS_URL}/commands"
         elif data.destination == "optical_station":
-            url = OGS_URL + '/commands'
+            url = f"{settings.OGS_URL}/commands"
         elif data.destination == "fomalhaut":
-            url = FOMALHAUT_URL + '/commands'
+            url = f"{settings.FOMALHAUT_URL}/commands"
         else:
             return JsonResponse({'error': 'Invalid command destination'}, status=400)
 
@@ -222,13 +222,13 @@ async def get_live_telemetry(request, params: TelemetryRequestSchema = Query(...
         url = ""
 
         if params.destination == "satellite":
-            url = RGS_URL + '/telemetry'
+            url = f"{settings.RGS_URL}/telemetry"
         elif params.destination == "radio_station":
-            url = RGS_URL + '/telemetry'
+            url = f"{settings.RGS_URL}/telemetry"
         elif params.destination == "optical_station":
-            url = OGS_URL + '/telemetry'
+            url = f"{settings.OGS_URL}/telemetry"
         elif params.destination == "fomalhaut":
-            url = FOMALHAUT_URL + '/telemetry'
+            url = f"{settings.FOMALHAUT_URL}/telemetry"
         else:
             return JsonResponse({'error': 'Invalid command destination'}, status=400)
         
@@ -282,13 +282,13 @@ async def get_live_events(request, params: EventRequestSchema = Query(...)):
         url = ""
 
         if params.destination == "satellite":
-            url = RGS_URL + '/events'
+            url = f"{settings.RGS_URL}/events"
         elif params.destination == "radio_station":
-            url = RGS_URL + '/events'
+            url = f"{settings.RGS_URL}/events"
         elif params.destination == "optical_station":
-            url = OGS_URL + '/events'
+            url = f"{settings.OGS_URL}/events"
         elif params.destination == "fomalhaut":
-            url = FOMALHAUT_URL + '/events'
+            url = f"{settings.FOMALHAUT_URL}/events"
         else:
             return JsonResponse({'error': 'Invalid command destination'}, status=400)
         
@@ -343,13 +343,13 @@ async def get_live_status(request, params: StatusRequestSchema = Query(...)):
         url = ""
 
         if params.destination == "satellite":
-            url = RGS_URL + '/status'
+            url = f"{settings.RGS_URL}/status"
         elif params.destination == "radio_station":
-            url = RGS_URL + '/status'
+            url = f"{settings.RGS_URL}/status"
         elif params.destination == "optical_station":
-            url = OGS_URL + '/status'
+            url = f"{settings.OGS_URL}/status"
         elif params.destination == "fomalhaut":
-            url = FOMALHAUT_URL + '/status'
+            url = f"{settings.FOMALHAUT_URL}/status"
         else:
             return JsonResponse({'error': 'Invalid command destination'}, status=400)
         

@@ -56,7 +56,7 @@ class Message(models.Model):
 # =========================================================
 
 class TelemetryMessage(Message):
-    subsystem = models.CharField(max_length=10, choices=Subsystem.choices)
+    subsystem = models.CharField(max_length=20, choices=Subsystem.choices)
     module = models.CharField(max_length=50)
     raw_data = models.TextField(blank=True)
     value = models.FloatField(null=True, blank=True)
@@ -88,7 +88,7 @@ class SystemMode(models.TextChoices):
 
 
 class StatusMessage(Message):
-    subsystem = models.CharField(max_length=10, choices=Subsystem.choices)
+    subsystem = models.CharField(max_length=20, choices=Subsystem.choices)
     state = models.JSONField()
     mode = models.CharField(max_length=20, choices=SystemMode.choices)
 
@@ -122,7 +122,7 @@ class CommandStatus(models.TextChoices):
 
 
 class CommandMessage(Message):
-    subsystem = models.CharField(max_length=10, choices=Subsystem.choices)
+    subsystem = models.CharField(max_length=20, choices=Subsystem.choices)
     parameters = models.JSONField()
     status = models.CharField(
         max_length=20,
@@ -149,7 +149,7 @@ class EventSeverity(models.TextChoices):
 
 
 class EventMessage(Message):
-    subsystem = models.CharField(max_length=10, choices=Subsystem.choices)
+    subsystem = models.CharField(max_length=20, choices=Subsystem.choices)
     severity = models.CharField(max_length=10, choices=EventSeverity.choices)
     code = models.CharField(max_length=50)
     description = models.TextField()
