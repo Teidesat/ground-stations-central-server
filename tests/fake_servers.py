@@ -1,51 +1,95 @@
-from fastapi import FastAPI
+"""
+Fake server for testing external service integration.
+"""
 
-from apps.dataflow.schemas import EventMessageSchema, StatusMessageSchema, TelemetryMessageSchema
+from fastapi import FastAPI, Query
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
 
-def create_fake_server():
-    app = FastAPI()
 
-    @app.get("/stream/telemetry")
-    async def telemetry(destination: str = None, **kwargs) -> TelemetryMessageSchema:
-        telemetry_message = TelemetryMessageSchema(
-            message_type="TM",
-            source="TEST-SAT-1",
+# Response Models
+class TelemetryResponse(BaseModel):
+    message_type: str = "TM"
+    source: str = "TEST-SAT-1"
+    destination: Optional[str] = None
+    timestamp: str = "2026-01-01T00:00:00Z"
+    subsystem: str = "EPS"
+    module: str = "battery_voltage"
+    value: float = 28.5
+    unit: str = "V"
+    valid: bool = True
+
+
+class EventResponse(BaseModel):
+    message_type: str = "EV"
+    source: str = "TEST-SAT-1"
+    destination: Optional[str] = None
+    timestamp: str = "2026-01-01T00:00:00Z"
+    subsystem: str = "OBC"
+    severity: str = "INFO"
+    code: str = "STARTUP"
+    description: str = "System startup completed"
+
+
+class StatusResponse(BaseModel):
+    message_type: str = "SM"
+    source: str = "TEST-SAT-1"
+    destination: Optional[str] = None
+    timestamp: str = "2026-01-01T00:00:00Z"
+    subsystem: str = "GENERAL"
+    state: dict = {"status": "operational"}
+    mode: str = "NOMINAL"
+
+
+class CommandResponse(BaseModel):
+    status: str = "success"
+    command_id: str = "cmd-123"
+    message: str = "Command accepted"
+
+
+def create_fake_server() -> FastAPI:
+    """Create a fake server for testing external service communication."""
+    app = FastAPI(title="Fake External Service")
+
+    @app.get("/telemetry", response_model=TelemetryResponse)
+    async def get_telemetry(
+        destination: Optional[str] = Query(None),
+        subsystem: Optional[str] = Query(None),
+        module: Optional[str] = Query(None)
+    ):
+        """Fake telemetry endpoint."""
+        return TelemetryResponse(
             destination=destination,
-            timestamp="2026-01-01T00:00:00Z",
-            subsystem="TEST_SUBSYSTEM",
-            module="TEST_MODULE",
-            value=42.0,
-            unit="units",
-            valid=True
+            subsystem=subsystem or "EPS",
+            module=module or "battery_voltage"
         )
-        return telemetry_message
-    
-    @app.get("/events")
-    async def events(destination: str = None, **kwargs) -> EventMessageSchema:
-        event_message = EventMessageSchema(
-            message_type="EV",
-            source="TEST-SAT-1",
-            destination=destination,
-            timestamp="2026-01-01T00:00:00Z",
-            subsystem="TEST_SUBSYSTEM",
-            severity="INFO",
-            code="TEST_EVENT",
-            description="This is a test event"
-        )
-        return event_message
 
-
-    @app.get("/status")
-    async def status(destination: str = None, **kwargs) -> StatusMessageSchema:
-        status_message = StatusMessageSchema(
-            message_type="SM",
-            source="TEST-SAT-1",
+    @app.get("/events", response_model=EventResponse)
+    async def get_events(
+        destination: Optional[str] = Query(None),
+        subsystem: Optional[str] = Query(None)
+    ):
+        """Fake events endpoint."""
+        return EventResponse(
             destination=destination,
-            timestamp="2026-01-01T00:00:00Z",
-            subsystem="TEST_SUBSYSTEM",
-            state={"key": "value"},
-            mode="NOMINAL"
+            subsystem=subsystem or "OBC"
         )
-        return status_message
+
+    @app.get("/status", response_model=StatusResponse)
+    async def get_status(
+        destination: Optional[str] = Query(None),
+        subsystem: Optional[str] = Query(None)
+    ):
+        """Fake status endpoint."""
+        return StatusResponse(
+            destination=destination,
+            subsystem=subsystem or "GENERAL"
+        )
+
+    @app.post("/commands", response_model=CommandResponse)
+    async def post_commands(data: dict):
+        """Fake command endpoint."""
+        return CommandResponse()
 
     return app

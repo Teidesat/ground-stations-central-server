@@ -1,0 +1,1 @@
+# apps/bridge/migrations/__init__.py

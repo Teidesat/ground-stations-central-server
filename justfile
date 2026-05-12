@@ -19,7 +19,7 @@ alias mm := makemigrations
 # Make Django migrations
 makemigrations:
     ./manage.py makemigrations
-    
+
 alias m := migrate
 # Apply Django migrations
 migrate:
@@ -63,11 +63,11 @@ create-su username="admin" password="admin" email="admin@example.com":
     from django.contrib.auth.models import User
     user, _ = User.objects.get_or_create(username="{{ username }}")
     user.email = "{{ email }}"
-    user.set_password("{{ password }}") 
+    user.set_password("{{ password }}")
     user.is_superuser = True
     user.is_staff = True
     user.save()
-    ' 
+    '
     echo "✔ Created superuser → {{ username }}:{{ password }}"
 
 # https://medium.com/@mustahibmajgaonkar/how-to-reset-django-migrations-6787b2a1e723
@@ -117,10 +117,10 @@ show-users:
     #!/usr/bin/env bash
     ./manage.py shell -c '
     from django.contrib.auth.models import User
-    
+
     for user in User.objects.exclude(is_superuser=True):
         print(user.username)
-    ' 
+    '
 
 # Load fixtures into database
 load-data: clean-data

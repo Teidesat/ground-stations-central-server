@@ -1,0 +1,1 @@
+# apps/audit/migrations/__init__.py

@@ -5,6 +5,11 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Instalar dependencias del sistema necesarias
+RUN apt-get update && apt-get install -y \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 
 RUN pip install --upgrade pip
@@ -12,18 +17,17 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-COPY justfile .
+# No copies justfile como archivo, instálalo mejor
+RUN mkdir -p /root/bin && \
+    curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /root/bin && \
+    export PATH="/root/bin:${PATH}"
 
-# create ~/bin
-RUN mkdir -p /root/bin
-
-# download and extract just to ~/bin/just
-RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /root/bin
-
-# add `/root/bin` to the paths that your shell searches for executables
 ENV PATH="/root/bin:${PATH}"
 
-# just should now be executable
-RUN just --help
-
 EXPOSE 8000
+
+# Mejor usar entrypoint script que ya tienes
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
