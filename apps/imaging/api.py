@@ -13,6 +13,7 @@ from apps.audit.services import create_log
 
 from .models import Imagen
 from .schemas import ImageDetailResponseSchema, ImageFilterSchema, ImageResponseSchema
+from .serializers import ImageDetailSerializer, ImageSerializer
 from .services import ImageProcessingService
 from .tasks import run_tasks
 
@@ -49,16 +50,8 @@ async def image_detail(request, image_id: int):
     """
     try:
         image = await sync_to_async(Imagen.objects.get)(id=image_id)
-
-        response = {
-            'id': image.pk,
-            'format': image.format,
-            'header': image.header_dict,
-            'exif': image.exif_dict,
-            'fecha': image.fecha,
-            'created_at': image.created_at,
-            'content': request.build_absolute_uri(image.content.url) if image.content else None,
-        }
+        sr = ImageDetailSerializer()
+        response = sr.serialize_instance(image)
 
         await create_log(
             level='INFO',
@@ -102,14 +95,10 @@ async def images_by_date(request, date_str: str):
         fecha_obj = datetime.strptime(date_str, '%Y-%m-%d')
         images = Imagen.objects.filter(created_at__date=fecha_obj.date())
 
+        sr = ImageSerializer()
         serialized = []
         async for image in images:
-            serialized.append({
-                'id': image.pk,
-                'format': image.format,
-                'created_at': image.created_at,
-                'content': request.build_absolute_uri(image.content.url) if image.content else None,
-            })
+            serialized.append(sr.serialize_instance(image))
 
         await create_log(
             level='INFO',

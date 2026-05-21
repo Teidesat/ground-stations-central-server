@@ -5,7 +5,6 @@ from ninja import NinjaAPI, UploadedFile
 
 from apps.audit.api import router as audit_router
 from apps.bridge.api import router as bridge_router
-from apps.control.api import router as control_router
 from apps.imaging.api import router as imaging_router
 from config.auth import SimpleTokenAuth
 from core.buffers.stack_buffer import StackBuffer
@@ -30,11 +29,10 @@ processor = None
 api.add_router("/imaging/", imaging_router, tags=["Image Analysis"])
 api.add_router("/bridge/", bridge_router, tags=["Data Flow"])
 api.add_router("/audit/", audit_router, tags=["Log Management"])
-api.add_router("/control/", control_router, tags=["Mission Control"])
 
 
-@api.post("/upload")
-async def recibir_datos(request, files: list[UploadedFile]):
+@api.post("/upload", tags=["General"])
+async def upload_data(request, files: list[UploadedFile]):
     """Primary endpoint for file reception and processing.
 
     Args:
@@ -61,7 +59,7 @@ async def recibir_datos(request, files: list[UploadedFile]):
     return {"success": True, "files_processed": len(files)}
 
 
-@api.get("/health")
+@api.get("/health", tags=["General"])
 def health_check(request):
     """Health check endpoint for monitoring.
 
@@ -74,7 +72,7 @@ def health_check(request):
     return {"status": "healthy", "buffer_size": len(stack_buffer)}
 
 
-@api.get("/processor/status")
+@api.get("/processor/status", tags=["General"])
 def get_processor_status(request):
     """Get the current buffer processor status.
 
@@ -90,7 +88,7 @@ def get_processor_status(request):
     return {"status": "not_initialized"}
 
 
-@api.get("/")
+@api.get("/", tags=["General"])
 def api_root(request):
     """API root endpoint providing available endpoint information.
 
@@ -106,7 +104,7 @@ def api_root(request):
         "endpoints": {
             "imaging": "/api/imaging/",
             "audit": "/api/audit/",
-            "control": "/api/control/",
+            "bridge": "/api/bridge/",
             "health": "/api/health",
         }
     }

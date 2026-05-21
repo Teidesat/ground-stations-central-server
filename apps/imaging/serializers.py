@@ -5,21 +5,9 @@ from typing import Optional
 
 from django.http import HttpRequest
 
-from core.serializers.base import BaseSerializer
 
-
-class ImageSerializer(BaseSerializer):
+class ImageSerializer():
     """Serializer for list views - lightweight representation of images."""
-
-    def __init__(self, to_serialize, *, fields: list = [], request: Optional[HttpRequest] = None):
-        """Initialize the ImageSerializer.
-
-        Args:
-            to_serialize: The object(s) to serialize.
-            fields: Optional list of field names to include.
-            request: Optional HTTP request for URL building.
-        """
-        super().__init__(to_serialize, fields=fields, request=request)
 
     def serialize_instance(self, instance) -> dict:
         """Convert a single Imagen instance to a lightweight dictionary.
@@ -41,24 +29,11 @@ class ImageSerializer(BaseSerializer):
         else:
             result['content'] = None
 
-        if self.fields:
-            return {k: v for k, v in result.items() if k in self.fields}
-
         return result
 
 
-class ImageDetailSerializer(BaseSerializer):
+class ImageDetailSerializer():
     """Serializer for detail views - full representation with metadata."""
-
-    def __init__(self, to_serialize, *, fields: list = [], request: Optional[HttpRequest] = None):
-        """Initialize the ImageDetailSerializer.
-
-        Args:
-            to_serialize: The object(s) to serialize.
-            fields: Optional list of field names to include.
-            request: Optional HTTP request for URL building.
-        """
-        super().__init__(to_serialize, fields=fields, request=request)
 
     def serialize_instance(self, instance) -> dict:
         """Convert a single Imagen instance to a detailed dictionary.
@@ -82,8 +57,5 @@ class ImageDetailSerializer(BaseSerializer):
             result['content'] = self.build_url(instance.content.url)
         else:
             result['content'] = None
-
-        if self.fields:
-            return {k: v for k, v in result.items() if k in self.fields}
 
         return result

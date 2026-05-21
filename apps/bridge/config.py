@@ -101,3 +101,4 @@ class APIPaths:
     TELEMETRY = 'telemetry'
     EVENTS = 'events'
     STATUS = 'status'
+    SOFTWARE_UPDATE = 'software_update'

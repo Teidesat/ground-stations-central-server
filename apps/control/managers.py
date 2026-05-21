@@ -187,3 +187,105 @@ class EventManager(models.Manager):
         return self.get_queryset().filter(
             Q(severity=EventSeverity.CRITICAL) | Q(severity=EventSeverity.WARNING)
         )[:limit]
+    
+class SoftwareUpdateQuerySet(models.QuerySet):
+    """QuerySet for SoftwareUpdate with common filter methods."""
+    
+    def by_version(self, version: str):
+        """Filter by version."""
+        return self.filter(version=version)
+    
+    def by_date(self, date):
+        """Filter by uploaded date (date object or string YYYY-MM-DD)."""
+        if isinstance(date, str):
+            from datetime import datetime
+            date = datetime.strptime(date, '%Y-%m-%d').date()
+        return self.filter(uploaded_at__date=date)
+    
+    def by_status(self, verified: bool):
+        """Filter by verification status."""
+        return self.filter(verified=verified)
+    
+    def verified(self):
+        """Return only verified updates."""
+        return self.filter(verified=True)
+    
+    def pending(self):
+        """Return only pending (unverified) updates."""
+        return self.filter(verified=False)
+    
+    def last(self):
+        """Return the most recent update."""
+        return self.order_by('-uploaded_at').first()
+    
+    def last_verified(self):
+        """Return the most recent verified update."""
+        return self.filter(verified=True).order_by('-uploaded_at').first()
+
+class SoftwareUpdateManager(models.Manager):
+    """Manager for SoftwareUpdate providing extended query methods."""
+    
+    def get_queryset(self):
+        """Return the custom SoftwareUpdateQuerySet."""
+        return SoftwareUpdateQuerySet(self.model, using=self._db)
+    
+    def get_last_update(self) -> Optional[object]:
+        """Return the last update (most recent by uploaded_at)."""
+        return self.get_queryset().order_by('-uploaded_at').first()
+    
+    def get_last_verified_update(self) -> Optional[object]:
+        """Return the last verified update (most recent verified by uploaded_at)."""
+        return self.get_queryset().filter(verified=True).order_by('-uploaded_at').first()
+    
+    def get_last_pending_update(self) -> Optional[object]:
+        """Return the last pending update (most recent unverified by uploaded_at)."""
+        return self.get_queryset().filter(verified=False).order_by('-uploaded_at').first()
+    
+    def get_version_history(self, version: str) -> List[object]:
+        """Return all updates for a specific version ordered by date."""
+        return self.get_queryset().by_version(version).order_by('-uploaded_at')
+    
+    def get_verified_updates(self) -> SoftwareUpdateQuerySet:
+        """Return all verified updates."""
+        return self.get_queryset().verified()
+    
+    def get_pending_updates(self) -> SoftwareUpdateQuerySet:
+        """Return all pending (unverified) updates."""
+        return self.get_queryset().pending()
+    
+    def get_updates_since(self, since_date):
+        """Return updates uploaded since a specific date."""
+        return self.get_queryset().filter(uploaded_at__gte=since_date)
+    
+    def verify_update(self, update_id: int) -> bool:
+        """Mark an update as verified and return success status."""
+        updated = self.filter(id=update_id).update(verified=True)
+        return updated > 0
+    
+    def exists_version(self, version: str) -> bool:
+        """Check if an update with given version exists."""
+        return self.filter(version=version).exists()
+    
+    def get_statistics(self) -> dict:
+        """Return statistics about software updates."""
+        total = self.count()
+        verified_count = self.filter(verified=True).count()
+        pending_count = self.filter(verified=False).count()
+        
+        total_size = self.aggregate(total=models.Sum('size_bytes'))['total'] or 0
+        
+        latest = self.get_last_update()
+        latest_verified = self.get_last_verified_update()
+        
+        return {
+            'total_updates': total,
+            'verified_updates': verified_count,
+            'pending_updates': pending_count,
+            'verification_rate': (verified_count / total * 100) if total > 0 else 0,
+            'total_size_bytes': total_size,
+            'total_size_mb': round(total_size / (1024 * 1024), 2),
+            'latest_update_version': latest.version if latest else None,
+            'latest_update_date': latest.uploaded_at if latest else None,
+            'latest_verified_version': latest_verified.version if latest_verified else None,
+            'latest_verified_date': latest_verified.uploaded_at if latest_verified else None,
+        }

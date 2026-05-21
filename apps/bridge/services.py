@@ -3,17 +3,18 @@
 
 import logging
 
+from typing import Optional
+
 import httpx
 
-from apps.audit.services import create_log
-from apps.control.models import (CommandMessage, EventMessage, StatusMessage,
+from apps.control.models import (CommandMessage, EventMessage, SoftwareUpdateMessage, StatusMessage,
                                  TelemetryMessage)
 
 from .clients import ServiceClientPool
 from .config import APIPaths, ServiceRegistry, VALID_DESTINATIONS
 from .exceptions import ExternalServiceError, InvalidDestinationError
 from .schemas import (CommandMessageSchema, EventMessageSchema,
-                      StatusMessageSchema, TelemetryMessageSchema)
+                      StatusMessageSchema, TelemetryMessageSchema, SoftwareUpdateMessageSchema)
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,38 @@ async def store_status_data(data: StatusMessageSchema) -> StatusMessage:
     logger.info(f"Status stored: ID={status.id}, subsystem={data.subsystem}, mode={data.mode}")
     return status
 
+async def store_software_update_data(data: SoftwareUpdateMessageSchema) -> SoftwareUpdateMessage:
+    """Store software update data in the database."""
+                                           
+    import base64
+    if data.data is None:
+        data_bytes = b"default_firmware_data"
+    elif isinstance(data.data, str):
+        data_bytes = base64.b64decode(data.data)
+    else:
+        data_bytes = data.data
+
+    software_update = await SoftwareUpdateMessage.objects.acreate(
+        message_type=data.message_type,
+        source=data.source,
+        destination=data.destination,
+        timestamp=data.timestamp,
+        version=data.version,
+        checksum=data.checksum,
+        size_bytes=data.size_bytes,
+        verified=data.verified,
+        uploaded_at=data.uploaded_at,
+        data=data_bytes
+    )
+    
+    logger.info(
+        f"Software update stored: ID={software_update.id}, "
+        f"version={data.version}, "
+        f"size={data.size_bytes} bytes, "
+        f"verified={data.verified}"
+    )
+    
+    return software_update
 
 def _get_service_and_path(destination: str, api_path: str):
     """Return the service endpoint and API path for a destination.
@@ -244,5 +277,20 @@ async def route_status_request(destination: str, params: dict) -> dict:
         Status data from the external service.
     """
     service, api_path = _get_service_and_path(destination, APIPaths.STATUS)
+    client = ServiceClientPool.get_client(destination, service)
+    return await client.get(api_path, params)
+
+
+async def route_software_update_request(destination: str, params: dict) -> dict:
+    """Request software update data from an external service.
+
+    Args:
+        destination: Source destination service.
+        params: Request parameters.
+
+    Returns:
+        Software update data from the external service.
+    """
+    service, api_path = _get_service_and_path(destination, APIPaths.SOFTWARE_UPDATE)
     client = ServiceClientPool.get_client(destination, service)
     return await client.get(api_path, params)

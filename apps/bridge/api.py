@@ -10,7 +10,8 @@ from ninja import Router, Query
 
 from apps.audit.services import create_log
 from apps.control.models import (CommandMessage, EventMessage, StatusMessage,
-                                 TelemetryMessage)
+                                 TelemetryMessage, SoftwareUpdateMessage)
+from apps.control.serializers import *
 
 from .clients import ExternalServiceClient
 from .config import APIPaths, ServiceRegistry, VALID_DESTINATIONS
@@ -27,12 +28,17 @@ from .schemas import (
     TelemetryFilterSchema,
     TelemetryMessageSchema,
     TelemetryRequestSchema,
+    SoftwareUpdateFilterSchema,
+    SoftwareUpdateMessageSchema,
+    SoftwareUpdateRequestSchema,
+    SoftwareUpdateSendRequestSchema
 )
 from .services import (
     store_command_data,
     store_event_data,
     store_status_data,
     store_telemetry_data,
+    store_software_update_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,30 +77,19 @@ async def get_telemetry_data(request, filters: TelemetryFilterSchema = Query(...
     qs = TelemetryMessage.objects.all()
     qs = filters.filter(qs)
 
-    results = []
-    async for item in qs:
-        results.append({
-            'message_type': item.message_type,
-            'source': item.source,
-            'destination': item.destination,
-            'timestamp': item.timestamp,
-            'subsystem': item.subsystem,
-            'module': item.module,
-            'value': item.value,
-            'unit': item.unit,
-            'valid': item.valid,
-        })
+    serializer = TelemetrySerializer()
+    result = [serializer.serialize_instance(item) async for item in qs]
 
     await create_log(
         level='INFO',
         logger='bridge-api',
         module='bridge.api',
         function='get_telemetry_data',
-        message=f'Retrieved {len(results)} telemetry records',
+        message=f'Retrieved {len(result)} telemetry records',
         request=request,
     )
 
-    return results
+    return result
 
 
 @router.get("/historical/events", response=List[EventMessageSchema])
@@ -111,20 +106,19 @@ async def get_event_data(request, filters: EventFilterSchema = Query(...)):
     qs = EventMessage.objects.all()
     qs = filters.filter(qs)
 
-    results = []
-    async for item in qs:
-        results.append({
-            'message_type': item.message_type,
-            'source': item.source,
-            'destination': item.destination,
-            'timestamp': item.timestamp,
-            'subsystem': item.subsystem,
-            'severity': item.severity,
-            'code': item.code,
-            'description': item.description,
-        })
+    serializer = EventSerializer()
+    result = [serializer.serialize_instance(item) async for item in qs]
 
-    return results
+    await create_log(
+        level='INFO',
+        logger='bridge-api',
+        module='bridge.api',
+        function='get_event_data',
+        message=f'Retrieved {len(result)} event records',
+        request=request,
+    )
+
+    return result
 
 
 @router.get("/historical/status", response=List[StatusMessageSchema])
@@ -141,19 +135,18 @@ async def get_status_data(request, filters: StatusFilterSchema = Query(...)):
     qs = StatusMessage.objects.all()
     qs = filters.filter(qs)
 
-    results = []
-    async for item in qs:
-        results.append({
-            'message_type': item.message_type,
-            'source': item.source,
-            'destination': item.destination,
-            'timestamp': item.timestamp,
-            'subsystem': item.subsystem,
-            'state': item.state,
-            'mode': item.mode,
-        })
+    serializer = StatusSerializer()
+    result = [serializer.serialize_instance(item) async for item in qs]
+    await create_log(
+        level='INFO',
+        logger='bridge-api',
+        module='bridge.api',
+        function='get_status_data',
+        message=f'Retrieved {len(result)} status records',
+        request=request,
+    )
 
-    return results
+    return result
 
 
 @router.get("/historical/commands", response=List[CommandMessageSchema])
@@ -170,21 +163,41 @@ async def get_command_data(request, filters: CommandFilterSchema = Query(...)):
     qs = CommandMessage.objects.all()
     qs = filters.filter(qs)
 
-    results = []
-    async for item in qs:
-        results.append({
-            'message_type': item.message_type,
-            'source': item.source,
-            'destination': item.destination,
-            'timestamp': item.timestamp,
-            'subsystem': item.subsystem,
-            'parameters': item.parameters,
-            'status': item.status,
-            'execution_time': item.execution_time,
-            'command_type': item.command_type,
-        })
+    serializer = CommandSerializer()
+    result = [serializer.serialize_instance(item) async for item in qs]
 
-    return results
+    await create_log(
+        level='INFO',
+        logger='bridge-api',
+        module='bridge.api',
+        function='get_command_data',
+        message=f'Retrieved {len(result)} command records',
+        request=request,
+    )
+
+    return result
+
+@router.get("/historical/software_updates")
+async def get_historical_software_updates(request, filters: SoftwareUpdateFilterSchema = Query(...)):
+    """Retrieve historical software update data from the database."""
+    from apps.control.models import SoftwareUpdateMessage
+    
+    qs = SoftwareUpdateMessage.objects.all()
+    qs = filters.filter(qs)
+    
+    serializer = SoftwareUpdateSerializer()
+    result = [serializer.serialize_instance(item) async for item in qs]
+    
+    await create_log(
+        level='INFO',
+        logger='bridge-api',
+        module='bridge.api.software_updates',
+        function='get_historical_software_updates',
+        message=f'Retrieved {len(result)} software update records',
+        request=request
+    )
+    
+    return result
 
 
 @router.post("/stream/commands")
@@ -387,6 +400,149 @@ async def get_live_status(request, params: StatusRequestSchema = Query(...)):
             logger='bridge-api',
             module='bridge.api',
             function='get_live_status',
+            message=f'Error: {e}',
+            request=request,
+            exception=e,
+        )
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+    
+@router.get("/stream/software_update")
+async def get_live_software_update(request, params: SoftwareUpdateRequestSchema = Query(...)):
+    """Retrieve live software update from an external service.
+    
+    Args:
+        request: HTTP request object.
+        destination: Target destination service.
+        version: Specific version to fetch (optional).
+        
+    Returns:
+        JSON response with software update data.
+    """
+    try:
+        await create_log(
+            level='INFO',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='get_live_software_update',
+            message=f'Fetching live software update from {params.destination}',
+            request=request
+        )
+        
+        client = _get_service_client(params.destination)
+        response = await client.get(APIPaths.SOFTWARE_UPDATE, params.dict())
+
+        if 'checksum' in response and len(response['checksum']) > 64:
+            await create_log(
+                level='WARNING',
+                logger='bridge-api',
+                module='bridge.api.software_updates',
+                function='get_live_software_update',
+                message=f'Checksum too long ({len(response["checksum"])} chars), truncating to 64',
+                request=request
+            )
+            response['checksum'] = response['checksum'][:64]
+        
+        update_data = SoftwareUpdateMessageSchema(**response)
+        await store_software_update_data(update_data)
+        
+        await create_log(
+            level='INFO',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='get_live_software_update',
+            message=f'Successfully stored software update version {update_data.version}',
+            request=request
+        )
+        
+        return {
+            'status': 'success',
+            'data': response,
+            'stored': True
+        }
+        
+    except InvalidDestinationError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except ExternalServiceError as e:
+        return JsonResponse(
+            {'error': 'Failed to fetch software update', 'detail': str(e)}, 
+            status=502
+        )
+    except ValueError as e:
+        return JsonResponse(
+            {'error': 'Invalid response format', 'detail': str(e)}, 
+            status=500
+        )
+    except Exception as e:
+        await create_log(
+            level='ERROR',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='get_live_software_update',
+            message=f'Error: {e}',
+            request=request,
+            exception=e,
+        )
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+@router.post("/stream/software_update")
+async def send_software_update(request, data: SoftwareUpdateSendRequestSchema):
+    """Send a software update.
+    
+    Args:
+        request: HTTP request object.
+        params: Data parameters including version and checksum for do the update.
+        
+    Returns:
+        Verification the update result.
+    """
+    try:
+        await create_log(
+            level='INFO',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='send_software_update',
+            message=f'Sending software update version {data.version}',
+            request=request
+        )
+
+        client = _get_service_client(data.destination)
+        response = await client.post(APIPaths.SOFTWARE_UPDATE, data.dict())
+
+        if response['verified'] == True:
+            update_data = SoftwareUpdateMessageSchema(**response)
+            await store_software_update_data(update_data)
+
+            await create_log(
+                level='INFO',
+                logger='bridge-api',
+                module='bridge.api.software_updates',
+                function='send_software_update',
+                message=f'Software update {data.version} {"verified" if response["verified"] else "unverified"} successfully',
+                request=request
+            )
+
+            return {'status': 'success', 'message': response, 'destination': data.destination}
+        
+        await create_log(
+            level='ERROR',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='send_software_update',
+            message=f'Error produced sending software update {data.version} to {data.destination} ',
+            request=request
+        )
+
+        return JsonResponse({'error': 'Failed to send software update'}, status=502)
+        
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        await create_log(
+            level='ERROR',
+            logger='bridge-api',
+            module='bridge.api.software_updates',
+            function='send_software_update',
             message=f'Error: {e}',
             request=request,
             exception=e,

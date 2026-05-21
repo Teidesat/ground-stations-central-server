@@ -4,7 +4,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import (CommandMessage, EventMessage, SoftwareUpdate, StatusMessage,
+from .models import (CommandMessage, EventMessage, SoftwareUpdateMessage, StatusMessage,
                      TelemetryMessage)
 
 
@@ -71,9 +71,9 @@ class EventMessageAdmin(admin.ModelAdmin):
     short_description.short_description = 'Description'
 
 
-@admin.register(SoftwareUpdate)
+@admin.register(SoftwareUpdateMessage)
 class SoftwareUpdateAdmin(admin.ModelAdmin):
-    """Admin interface for SoftwareUpdate model."""
+    """Admin interface for SoftwareUpdateMessage model."""
 
     list_display = ('id', 'version', 'size_bytes', 'verified', 'uploaded_at')
     list_filter = ('verified', 'uploaded_at')

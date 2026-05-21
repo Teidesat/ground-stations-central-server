@@ -201,3 +201,72 @@ class TestStatusModel:
         
         assert status.pk is not None
         assert status.mode == "NOMINAL"
+
+class TestSoftwareUpdateModel:
+    """Tests for SoftwareUpdateMessage model."""
+
+    def test_create_software_update(self):
+        """Test creating a software update instance."""
+        import hashlib
+        from apps.control.models import SoftwareUpdateMessage
+
+        test_data = b"test_firmware_data"
+        valid_checksum = hashlib.sha256(test_data).hexdigest()
+        
+        software_update = SoftwareUpdateMessage.objects.create(
+            version="1.2.3",
+            checksum=valid_checksum,
+            size_bytes=len(test_data),
+            verified=False,
+            data=test_data,
+            source="GROUND",
+            destination="SATELLITE"
+        )
+        
+        assert software_update.pk is not None
+        assert software_update.version == "1.2.3"
+        assert software_update.verified is False
+        assert software_update.size_bytes == len(test_data)
+        assert software_update.message_type == "UP"
+        assert software_update.timestamp is not None
+        assert software_update.uploaded_at is not None
+
+    def test_software_update_str(self):
+        """Test string representation."""
+        import hashlib
+        from apps.control.models import SoftwareUpdateMessage
+        test_data = b"test_data"
+        valid_checksum = hashlib.sha256(test_data).hexdigest()
+        
+        software_update = SoftwareUpdateMessage.objects.create(
+            version="2.0.0",
+            checksum=valid_checksum,
+            size_bytes=len(test_data),
+            verified=True,
+            data=test_data
+        )
+        
+        assert str(software_update) == "UPDATE v2.0.0 - Verified"
+        
+        software_update.verified = False
+        software_update.save()
+        assert str(software_update) == "UPDATE v2.0.0 - Pending"
+
+    def test_software_update_auto_fields(self):
+        """Test auto-populated fields."""
+        import hashlib
+        from apps.control.models import SoftwareUpdateMessage
+        test_data = b"test_data"
+        valid_checksum = hashlib.sha256(test_data).hexdigest()
+        
+        software_update = SoftwareUpdateMessage.objects.create(
+            version="1.0.0",
+            checksum=valid_checksum,
+            size_bytes=len(test_data),
+            data=test_data
+        )
+        
+        assert software_update.message_type == "UP"
+        assert software_update.destination == "SATELLITE"
+        assert software_update.timestamp is not None
+        assert software_update.uploaded_at is not None

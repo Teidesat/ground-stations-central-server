@@ -83,11 +83,15 @@ class TestModelsIntegrity:
         assert command.message_type == "CM"
 
     def test_software_update_auto_destination(self):
-        from apps.control.models import SoftwareUpdate
+        import hashlib
+        from apps.control.models import SoftwareUpdateMessage
+
+        test_data = b"test_data"
+        valid_checksum = hashlib.sha256(test_data).hexdigest()
         
-        update = SoftwareUpdate.objects.create(
+        update = SoftwareUpdateMessage.objects.create(
             version="1.0.0",
-            checksum="abc123",
+            checksum=valid_checksum,
             size_bytes=1000,
             data=b"test_data"
         )

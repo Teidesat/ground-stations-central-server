@@ -4,7 +4,7 @@
 from django.db import models
 from django.utils import timezone
 
-from .managers import CommandManager, EventManager, TelemetryManager
+from .managers import CommandManager, EventManager, TelemetryManager, SoftwareUpdateManager
 
 
 class MessageType(models.TextChoices):
@@ -218,7 +218,7 @@ class EventMessage(Message):
         return f"EVENT [{self.severity}] {self.code}: {self.description[:50]}"
 
 
-class SoftwareUpdate(Message):
+class SoftwareUpdateMessage(Message):
     """Software update model for firmware and software distribution."""
 
     version = models.CharField(max_length=20)
@@ -227,6 +227,8 @@ class SoftwareUpdate(Message):
     verified = models.BooleanField(default=False, db_index=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     data = models.BinaryField()
+
+    objects = SoftwareUpdateManager()
 
     class Meta:
         indexes = [
