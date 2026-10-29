@@ -27,7 +27,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: my-timescaledb-container
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: timescaledb
+      POSTGRES_USER: timescale_user
+      POSTGRES_PASSWORD: timescale_password
+    restart: unless-stopped
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./init-timescale.sql:/docker-entrypoint-initdb.d/01-init-timescale.sql
 
   redis:
     image: "redis:alpine"
@@ -57,7 +69,7 @@ services:
     depends_on:
       - redis
 
-
 volumes:
   postgres_data:
+  timescaledb_data:
   redis_data:
