@@ -39,3 +39,6 @@ media/*
 !media/README.md
 examples
 dump.rdb
+
+logs/
+*.log

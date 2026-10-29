@@ -59,6 +59,9 @@ class Imagen(models.Model):
         help_text="Record creation timestamp"
     )
     raw_data = models.TextField(
+        blank=True,
+        null=True,
+        default=None,
         help_text="Raw image data or reference"
     )
     content = models.ImageField(
