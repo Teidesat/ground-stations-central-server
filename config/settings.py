@@ -72,6 +72,7 @@ TEMPLATES = [
 ]
 
 # Database configuration
+# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -80,8 +81,18 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
         'HOST': os.getenv('DB_HOST', 'my-postgres-container'),
         'PORT': int(os.getenv('DB_PORT', 5432)),
+    },
+    'timescale': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('TIMESCALE_DB', 'timescaledb'),
+        'USER': os.getenv('TIMESCALE_USER', 'timescale_user'),
+        'PASSWORD': os.getenv('TIMESCALE_PASSWORD', 'timescale_password'),
+        'HOST': os.getenv('TIMESCALE_HOST', 'my-timescaledb-container'),
+        'PORT': int(os.getenv('TIMESCALE_PORT', 5432)),
     }
 }
+
+DATABASE_ROUTERS = ['config.routers.TimescaleRouter']
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

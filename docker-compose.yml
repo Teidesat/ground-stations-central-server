@@ -10,10 +10,25 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    environment:
+      # Conexión Postgres estándar (default)
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: my-postgres-container
+      DB_PORT: 5432
+
+      # Conexión TimescaleDB (telemetría)
+      TIMESCALE_DB: ${TIMESCALE_DB:-timescaledb}
+      TIMESCALE_USER: ${TIMESCALE_USER:-timescale_user}
+      TIMESCALE_PASSWORD: ${TIMESCALE_PASSWORD:-timescale_password}
+      TIMESCALE_HOST: my-timescaledb-container
+      TIMESCALE_PORT: 5432
     depends_on:
       - postgres
       - redis
-  
+      - timescaledb
+
   postgres:
     image: postgres:17-alpine
     container_name: my-postgres-container
@@ -56,8 +71,23 @@ services:
     command: celery -A main worker -E -l info
     volumes:
       - .:/app
+    environment:
+      # Variables necesarias si las tareas tocan BD o telemetría
+      DB_NAME: ${DB_NAME:-postgres}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: my-postgres-container
+      DB_PORT: 5432
+
+      TIMESCALE_DB: ${TIMESCALE_DB:-timescaledb}
+      TIMESCALE_USER: ${TIMESCALE_USER:-timescale_user}
+      TIMESCALE_PASSWORD: ${TIMESCALE_PASSWORD:-timescale_password}
+      TIMESCALE_HOST: my-timescaledb-container
+      TIMESCALE_PORT: 5432
     depends_on:
       - redis
+      - postgres
+      - timescaledb
       - app
 
   flower:
