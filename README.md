@@ -23,7 +23,7 @@ GSCS is a server that receives raw data from the Optical Ground Station (OGS), c
 
 - Hybrid database architecture: PostgreSQL 17 for relational data and TimescaleDB for high-frequency satellite telemetry.
 
-- Decoupled multimedia storage on the local filesystem (`media/images/`).
+- Decoupled multimedia storage on the local filesystem (`images/`).
 
 - Backend based on Django Ninja.
 
