@@ -59,7 +59,6 @@ docker compose up --build
 
 ```bash
 docker compose exec app python manage.py migrate
-docker compose exec app python manage.py migrate control 0001 --fake --database=timescale
 docker compose exec app python manage.py migrate --database=timescale
 ```
 
