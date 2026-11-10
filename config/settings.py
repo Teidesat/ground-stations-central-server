@@ -72,7 +72,6 @@ TEMPLATES = [
 ]
 
 # Database configuration
-# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
